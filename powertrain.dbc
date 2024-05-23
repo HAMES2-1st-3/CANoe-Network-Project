@@ -33,10 +33,13 @@ NS_ :
 
 BS_:
 
-BU_: ECM_S Gateway ODS TCU ECM_M
+BU_: testNode ECM_S Gateway ODS TCU ECM_M
 VAL_TABLE_ vtbSensorReqCause 15 "SNA" 2 "by Request 2" 1 "by Request 1" 0 "normal cycle" ;
 VAL_TABLE_ vtbErrorDescription 255 "ERROR" ;
 
+
+BO_ 1792 testmsg: 1 testNode
+ SG_ testsig : 0|1@1+ (1,0) [0|1] ""  Gateway
 
 BO_ 1584 ECM_inspection_s: 1 ECM_S
  SG_ sig_plug : 2|1@1+ (1,0) [0|1] "flag"  Gateway
@@ -127,26 +130,28 @@ BA_DEF_DEF_  "GenMsgCycleTimeFast" 20;
 BA_DEF_DEF_  "GenMsgILSupport" "Yes";
 BA_DEF_DEF_  "GenMsgFastOnStart" 0;
 BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_ "GenMsgCycleTime" BO_ 1792 1000;
+BA_ "GenMsgSendType" BO_ 1792 0;
 BA_ "GenMsgCycleTime" BO_ 1584 0;
-BA_ "GenMsgSendType" BO_ 273 0;
 BA_ "GenMsgCycleTime" BO_ 273 5;
-BA_ "GenMsgCycleTime" BO_ 272 5;
+BA_ "GenMsgSendType" BO_ 273 0;
 BA_ "GenMsgSendType" BO_ 272 0;
+BA_ "GenMsgCycleTime" BO_ 272 5;
 BA_ "GenMsgCycleTime" BO_ 1585 0;
-BA_ "GenMsgCycleTime" BO_ 288 5;
 BA_ "GenMsgSendType" BO_ 288 0;
-BA_ "GenMsgSendType" BO_ 1280 0;
+BA_ "GenMsgCycleTime" BO_ 288 5;
 BA_ "GenMsgCycleTime" BO_ 1280 1000;
-BA_ "GenMsgSendType" BO_ 768 0;
+BA_ "GenMsgSendType" BO_ 1280 0;
 BA_ "GenMsgCycleTime" BO_ 768 50;
-BA_ "GenMsgSendType" BO_ 513 0;
+BA_ "GenMsgSendType" BO_ 768 0;
 BA_ "GenMsgCycleTime" BO_ 513 20;
-BA_ "GenMsgCycleTime" BO_ 289 5;
+BA_ "GenMsgSendType" BO_ 513 0;
 BA_ "GenMsgSendType" BO_ 289 0;
-BA_ "GenMsgSendType" BO_ 275 0;
+BA_ "GenMsgCycleTime" BO_ 289 5;
 BA_ "GenMsgCycleTime" BO_ 275 5;
-BA_ "GenMsgCycleTime" BO_ 274 5;
+BA_ "GenMsgSendType" BO_ 275 0;
 BA_ "GenMsgSendType" BO_ 274 0;
+BA_ "GenMsgCycleTime" BO_ 274 5;
 BA_ "GenMsgCycleTime" BO_ 1536 0;
 BA_ "GenSigSendType" SG_ 1584 sig_plug 7;
 BA_ "GenSigSendType" SG_ 1584 sig_air_filter 7;
