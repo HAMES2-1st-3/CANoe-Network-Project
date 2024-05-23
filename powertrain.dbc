@@ -1,0 +1,160 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: ECM_S Gateway ODS TCU ECM_M
+VAL_TABLE_ vtbSensorReqCause 15 "SNA" 2 "by Request 2" 1 "by Request 1" 0 "normal cycle" ;
+VAL_TABLE_ vtbErrorDescription 255 "ERROR" ;
+
+
+BO_ 1584 ECM_inspection_s: 1 ECM_S
+ SG_ sig_plug : 2|1@1+ (1,0) [0|1] "flag"  Gateway
+ SG_ sig_air_filter : 1|1@1+ (1,0) [0|1] "flag"  Gateway
+ SG_ sig_engine_oil : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+
+BO_ 273 ECM_ct_s: 2 ECM_S
+ SG_ sig_temp : 0|16@1- (0.1,0) [-200|1000] "°C"  Gateway
+
+BO_ 272 ECM_rpm_s: 2 ECM_S
+ SG_ sig_rpm : 0|16@1+ (1,0) [0|65535] "rpm"  TCU,Gateway
+
+BO_ 1585 ECM_inspection_m: 1 ECM_M
+ SG_ sig_engine_oil : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+ SG_ sig_air_filter : 1|1@1+ (1,0) [0|1] "flag"  Gateway
+ SG_ sig_plug : 2|1@1+ (1,0) [0|1] "flag"  Gateway
+
+BO_ 288 HECU_brake: 1 Gateway
+ SG_ sig_brake : 1|7@1+ (1,0) [0|100] "%"  ECM_S,ECM_M
+ SG_ sig_user_command : 0|1@1+ (1,0) [0|1] "flag"  ECM_S,ECM_M
+
+BO_ 1280 CLU_drivingmode: 1 Gateway
+ SG_ sig_drivingmode : 0|2@1+ (1,0) [0|2] ""  ECM_S,ECM_M
+
+BO_ 768 CLU_odometer: 3 Gateway
+ SG_ sig_driven_distance : 0|20@1+ (1,0) [0|1048575] "km"  ECM_S,ECM_M
+
+BO_ 513 ACC_setvel: 1 Gateway
+ SG_ sig_setvel : 0|8@1+ (1,0) [0|250] "km/s"  ECM_S,ECM_M
+
+BO_ 289 TCU_gear: 1 TCU
+ SG_ sig_gear_dir : 3|1@1+ (1,0) [0|1] "flag"  ECM_M,ECM_S,Gateway
+ SG_ sig_gearstep : 0|3@1+ (1,0) [1|5] "stage"  ECM_M,ECM_S,Gateway
+
+BO_ 275 ECM_ct_m: 2 ECM_M
+ SG_ sig_temp : 0|16@1- (0.1,0) [-200|1000] "°C"  Gateway
+
+BO_ 274 ECM_rpm_m: 2 ECM_M
+ SG_ sig_rpm : 0|16@1+ (1,0) [0|65535] "rpm"  TCU,Gateway
+
+BO_ 1536 ODS_passenger: 1 ODS
+ SG_ sig_passenger_present : 1|1@1+ (1,0) [0|1] "flag"  Gateway
+ SG_ sig_driver_present : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+
+
+
+CM_ SG_ 1584 sig_engine_oil "0(no) / 1(alarm)";
+CM_ SG_ 272 sig_rpm "65,535 ~ 0 [rpm]";
+CM_ SG_ 1585 sig_engine_oil "0(no) / 1(alarm)";
+CM_ SG_ 288 sig_brake "brake 밟은 비율 (0~100%)";
+CM_ SG_ 288 sig_user_command "운전자의 브레이크 입력인지 아닌지 나타내는 flag";
+CM_ SG_ 289 sig_gear_dir "0(down) / 1(up)";
+CM_ SG_ 289 sig_gearstep "1(1단)/ 2(2단)/ 3(3단)/ 4(4단)/ 5(5단)";
+CM_ SG_ 274 sig_rpm "65,535 ~ 0 [rpm]";
+CM_ SG_ 1536 sig_passenger_present "passenger - 0(absence) / 1(present)";
+CM_ SG_ 1536 sig_driver_present "driver - 0(absence) / 1(present)";
+BA_DEF_ BO_  "DiagState" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagResponse" ENUM  "No","Yes","vector_leerstring";
+BA_DEF_ BO_  "DiagRequest" ENUM  "No","Yes","vector_leerstring";
+BA_DEF_  "Manufacturer" STRING ;
+BA_DEF_ BU_  "NodeLayerModules" STRING ;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 1215752192;
+BA_DEF_ SG_  "GenSigSendType" ENUM  "Cyclic","OnWrite","OnWriteWithRepetition","OnChange","OnChangeWithRepetition","IfActive","IfActiveWithRepetition","NoSigSendType","NotUsed","NotUsed","NotUsed","NotUsed","NotUsed";
+BA_DEF_ SG_  "GenSigInactiveValue" INT 0 100000;
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","NotUsed","NotUsed","NotUsed","NotUsed","Cyclic","NotUsed","IfActive","NoMsgSendType","NotUsed","vector_leerstring";
+BA_DEF_ BO_  "GenMsgNrOfRepetition" INT 0 999999;
+BA_DEF_ BO_  "GenMsgDelayTime" INT 0 1000;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 50000;
+BA_DEF_ BO_  "GenMsgCycleTimeFast" INT 0 50000;
+BA_DEF_ BO_  "GenMsgILSupport" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgFastOnStart" INT 0 100000;
+BA_DEF_ BO_  "GenMsgStartDelayTime" INT 0 100000;
+BA_DEF_DEF_  "DiagState" "No";
+BA_DEF_DEF_  "DiagResponse" "No";
+BA_DEF_DEF_  "DiagRequest" "No";
+BA_DEF_DEF_  "Manufacturer" "Vector";
+BA_DEF_DEF_  "NodeLayerModules" "CANoeILNLVector.dll";
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "GenSigSendType" "Cyclic";
+BA_DEF_DEF_  "GenSigInactiveValue" 0;
+BA_DEF_DEF_  "GenMsgSendType" "NoMsgSendType";
+BA_DEF_DEF_  "GenMsgNrOfRepetition" 0;
+BA_DEF_DEF_  "GenMsgDelayTime" 0;
+BA_DEF_DEF_  "GenMsgCycleTime" 200;
+BA_DEF_DEF_  "GenMsgCycleTimeFast" 20;
+BA_DEF_DEF_  "GenMsgILSupport" "Yes";
+BA_DEF_DEF_  "GenMsgFastOnStart" 0;
+BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_ "GenMsgCycleTime" BO_ 1584 0;
+BA_ "GenMsgSendType" BO_ 273 0;
+BA_ "GenMsgCycleTime" BO_ 273 5;
+BA_ "GenMsgCycleTime" BO_ 272 5;
+BA_ "GenMsgSendType" BO_ 272 0;
+BA_ "GenMsgCycleTime" BO_ 1585 0;
+BA_ "GenMsgCycleTime" BO_ 288 5;
+BA_ "GenMsgSendType" BO_ 288 0;
+BA_ "GenMsgSendType" BO_ 1280 0;
+BA_ "GenMsgCycleTime" BO_ 1280 1000;
+BA_ "GenMsgSendType" BO_ 768 0;
+BA_ "GenMsgCycleTime" BO_ 768 50;
+BA_ "GenMsgSendType" BO_ 513 0;
+BA_ "GenMsgCycleTime" BO_ 513 20;
+BA_ "GenMsgCycleTime" BO_ 289 5;
+BA_ "GenMsgSendType" BO_ 289 0;
+BA_ "GenMsgSendType" BO_ 275 0;
+BA_ "GenMsgCycleTime" BO_ 275 5;
+BA_ "GenMsgCycleTime" BO_ 274 5;
+BA_ "GenMsgSendType" BO_ 274 0;
+BA_ "GenMsgCycleTime" BO_ 1536 0;
+BA_ "GenSigSendType" SG_ 1584 sig_plug 7;
+BA_ "GenSigSendType" SG_ 1584 sig_air_filter 7;
+BA_ "GenSigSendType" SG_ 1584 sig_engine_oil 7;
+BA_ "GenSigSendType" SG_ 1585 sig_engine_oil 7;
+BA_ "GenSigSendType" SG_ 1585 sig_air_filter 7;
+BA_ "GenSigSendType" SG_ 1585 sig_plug 7;
+BA_ "GenSigStartValue" SG_ 289 sig_gearstep 1;
+BA_ "GenSigSendType" SG_ 1536 sig_passenger_present 7;
+BA_ "GenSigSendType" SG_ 1536 sig_driver_present 7;
+

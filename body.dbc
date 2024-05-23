@@ -1,0 +1,149 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Gateway Dashboard DMS PSM BCM
+VAL_TABLE_ vtbSensorReqCause 15 "SNA" 2 "by Request 2" 1 "by Request 1" 0 "normal cycle" ;
+VAL_TABLE_ vtbErrorDescription 255 "ERROR" ;
+
+
+BO_ 1584 ECM_inspection_s: 1 Gateway
+ SG_ sig_air_filter : 1|1@1+ (1,0) [0|1] "flag"  Dashboard
+ SG_ sig_plug : 2|1@1+ (1,0) [0|1] "flag"  Dashboard
+ SG_ sig_engine_oil : 0|1@1+ (1,0) [0|1] "flag"  Dashboard
+
+BO_ 1585 ECM_inspection_m: 1 Gateway
+ SG_ sig_plug : 2|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_engine_oil : 0|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_air_filter : 1|1@1+ (1,0) [0|1] "flag" Vector__XXX
+
+BO_ 305 DMS_driverstate: 1 DMS
+ SG_ sig_droswy : 0|7@1+ (1,0) [0|127] "%"  Dashboard,BCM,PSM,Gateway
+
+BO_ 1536 ODS_passenger: 1 Gateway
+ SG_ sig_passenger_present : 1|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_driver_present : 0|1@1+ (1,0) [0|1] "flag"  Dashboard,BCM
+
+BO_ 256 ACU_crashstate: 1 Gateway
+ SG_ sig_crashstate : 0|2@1+ (1,0) [0|3] ""  BCM
+
+BO_ 1568 PSM_passenger: 1 PSM
+ SG_ sig_passenger_state_num : 5|1@1+ (1,0) [0|1] "flag"  Dashboard
+ SG_ sig_passenger_setting_flag : 4|1@1+ (1,0) [0|1] "flag"  Dashboard
+ SG_ sig_passenger_floor : 2|2@1+ (1,0) [0|3] "flag"  Dashboard
+ SG_ sig_passenger_back : 0|2@1+ (1,0) [0|3] "flag"  Dashboard
+
+BO_ 1569 PSM_driver: 1 PSM
+ SG_ sig_driver_state_num : 5|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_driver_setting_flag : 4|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_driver_back : 2|2@1+ (1,0) [0|3] "flag" Vector__XXX
+ SG_ sig_driver_floor : 0|2@1+ (1,0) [0|3] "flag"  Dashboard
+
+BO_ 528 BCM_seatbelt: 1 BCM
+ SG_ sig_passenger_belt : 1|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_driver_belt : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+
+BO_ 306 BCM_hazard: 1 BCM
+ SG_ sig_hazard : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+
+BO_ 1552 BCM_light: 1 BCM
+ SG_ sig_taillight : 2|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ sig_lowbeam : 1|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_highbeam : 0|1@1+ (1,0) [0|1] "flag"  Gateway
+
+
+
+BA_DEF_ BO_  "DiagState" ENUM  "No","Yes";
+BA_DEF_ BO_  "DiagResponse" ENUM  "No","Yes","vector_leerstring";
+BA_DEF_ BO_  "DiagRequest" ENUM  "No","Yes","vector_leerstring";
+BA_DEF_  "Manufacturer" STRING ;
+BA_DEF_ BU_  "NodeLayerModules" STRING ;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 1215752192;
+BA_DEF_ SG_  "GenSigSendType" ENUM  "Cyclic","OnWrite","OnWriteWithRepetition","OnChange","OnChangeWithRepetition","IfActive","IfActiveWithRepetition","NoSigSendType","NotUsed","NotUsed","NotUsed","NotUsed","NotUsed";
+BA_DEF_ SG_  "GenSigInactiveValue" INT 0 100000;
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","NotUsed","NotUsed","NotUsed","NotUsed","Cyclic","NotUsed","IfActive","NoMsgSendType","NotUsed","vector_leerstring";
+BA_DEF_ BO_  "GenMsgNrOfRepetition" INT 0 999999;
+BA_DEF_ BO_  "GenMsgDelayTime" INT 0 1000;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 50000;
+BA_DEF_ BO_  "GenMsgCycleTimeFast" INT 0 50000;
+BA_DEF_ BO_  "GenMsgILSupport" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgFastOnStart" INT 0 100000;
+BA_DEF_ BO_  "GenMsgStartDelayTime" INT 0 100000;
+BA_DEF_DEF_  "DiagState" "No";
+BA_DEF_DEF_  "DiagResponse" "No";
+BA_DEF_DEF_  "DiagRequest" "No";
+BA_DEF_DEF_  "Manufacturer" "Vector";
+BA_DEF_DEF_  "NodeLayerModules" "CANoeILNLVector.dll";
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "GenSigSendType" "Cyclic";
+BA_DEF_DEF_  "GenSigInactiveValue" 0;
+BA_DEF_DEF_  "GenMsgSendType" "NoMsgSendType";
+BA_DEF_DEF_  "GenMsgNrOfRepetition" 0;
+BA_DEF_DEF_  "GenMsgDelayTime" 0;
+BA_DEF_DEF_  "GenMsgCycleTime" 200;
+BA_DEF_DEF_  "GenMsgCycleTimeFast" 20;
+BA_DEF_DEF_  "GenMsgILSupport" "Yes";
+BA_DEF_DEF_  "GenMsgFastOnStart" 0;
+BA_DEF_DEF_  "GenMsgStartDelayTime" 0;
+BA_ "GenMsgSendType" BO_ 305 0;
+BA_ "GenMsgCycleTime" BO_ 305 5;
+BA_ "GenMsgSendType" BO_ 256 0;
+BA_ "GenMsgCycleTime" BO_ 256 5;
+BA_ "GenMsgCycleTime" BO_ 528 0;
+BA_ "GenMsgSendType" BO_ 306 0;
+BA_ "GenMsgCycleTime" BO_ 306 5;
+BA_ "GenSigSendType" SG_ 1584 sig_air_filter 7;
+BA_ "GenSigSendType" SG_ 1584 sig_plug 7;
+BA_ "GenSigSendType" SG_ 1584 sig_engine_oil 7;
+BA_ "GenSigSendType" SG_ 1585 sig_plug 7;
+BA_ "GenSigSendType" SG_ 1585 sig_engine_oil 7;
+BA_ "GenSigSendType" SG_ 1585 sig_air_filter 7;
+BA_ "GenSigSendType" SG_ 1536 sig_passenger_present 7;
+BA_ "GenSigSendType" SG_ 1536 sig_driver_present 7;
+BA_ "GenSigSendType" SG_ 1568 sig_passenger_state_num 7;
+BA_ "GenSigSendType" SG_ 1568 sig_passenger_setting_flag 7;
+BA_ "GenSigSendType" SG_ 1568 sig_passenger_floor 7;
+BA_ "GenSigSendType" SG_ 1568 sig_passenger_back 7;
+BA_ "GenSigSendType" SG_ 1569 sig_driver_state_num 7;
+BA_ "GenSigSendType" SG_ 1569 sig_driver_setting_flag 7;
+BA_ "GenSigSendType" SG_ 1569 sig_driver_back 7;
+BA_ "GenSigSendType" SG_ 1569 sig_driver_floor 7;
+BA_ "GenSigSendType" SG_ 528 sig_passenger_belt 7;
+BA_ "GenSigSendType" SG_ 528 sig_driver_belt 7;
+BA_ "GenSigSendType" SG_ 1552 sig_taillight 7;
+BA_ "GenSigSendType" SG_ 1552 sig_lowbeam 7;
+BA_ "GenSigSendType" SG_ 1552 sig_highbeam 7;
+
