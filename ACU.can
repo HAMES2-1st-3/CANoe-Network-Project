@@ -1,0 +1,129 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables //전역변수
+{
+  int driver_exist=1; //ODS로부터 받는 운전자 존재 여부 저장 0 세팅할 것
+  int passenger_exist=1; //ODS로부터 받는 동승자 존재 여부 저장 0세팅 것
+  
+}
+
+on start
+{
+  @sysvar::Chassis::Front_crashsensor=0;
+  @sysvar::Chassis::Left_crashsensor=0;
+  @sysvar::Chassis::Right_crashsensor=0;
+  @sysvar::Chassis::Deploy_airbag_d =0;
+  @sysvar::Chassis::Deploy_airbag_p =0;
+  
+}
+
+on message ODS_passenger{ //일단 메시지 signal 따로 값 저장
+
+  // 가능 케이스 : 0 0   0 1     1 0    1 1 
+  driver_exist=this.sig_driver_present.phys;
+  passenger_exist=this.sig_passenger_present.phys;
+}
+
+on sysvar Chassis::Front_crashsensor{
+  
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+on sysvar Chassis::Left_crashsensor{
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+on sysvar Chassis::Right_crashsensor{
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+
+ void deploy_airbag(int driver,int passenger){
+     //sysvar 변수값 (터졌을 때)
+   
+   //좌,우, 직진 하나라도 센서값 1이면 메시지 전송(IL 알아서)
+   if(@sysvar::Chassis::Front_crashsensor==1||@sysvar::Chassis::Left_crashsensor==1||@sysvar::Chassis::Right_crashsensor==1){
+     $chassis::ACU::ACU_crashstate::sig_crashstate=1;
+   }else{
+     $chassis::ACU::ACU_crashstate::sig_crashstate=0;
+   }
+   
+  //운전자, 승객 존재 확인 후 에어백 터트려
+   
+  if(driver==1&&passenger==0){ //운전자만 탄 경우 (FL)
+     @sysvar::Chassis::Deploy_airbag_p =0;
+    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_d =0;
+
+    } 
+    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+      @sysvar::Chassis::Deploy_airbag_d =1;
+  
+    }
+    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+      @sysvar::Chassis::Deploy_airbag_d =2;
+   
+    } 
+    else{ //둘다 터져
+      @sysvar::Chassis::Deploy_airbag_d =3;
+
+    }
+    
+    
+  }
+  else if(driver==1&&passenger==1){ //운전자, 탑승자 모두 탄 경우 (FL, FR)
+  
+    //운전자
+    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+      @sysvar::Chassis::Deploy_airbag_d =0;
+    } 
+    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+      @sysvar::Chassis::Deploy_airbag_d =1;
+    }
+    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+      @sysvar::Chassis::Deploy_airbag_d =2;
+    } 
+    else{ //둘다 터져
+      @sysvar::Chassis::Deploy_airbag_d =3;
+    }
+    
+    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+      @sysvar::Chassis::Deploy_airbag_p=0;
+    } 
+    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+      @sysvar::Chassis::Deploy_airbag_p =1;
+    }
+    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+      @sysvar::Chassis::Deploy_airbag_p =2;
+    } 
+    else{ //둘다 터져
+      @sysvar::Chassis::Deploy_airbag_p =3;
+    }
+    
+ }
+  else if(driver==0&&passenger==1){ //운전자 없고 탑승자만 (FR)
+    
+     @sysvar::Chassis::Deploy_airbag_d =0;
+    
+    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+      @sysvar::Chassis::Deploy_airbag_p =0;
+    } 
+    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+      @sysvar::Chassis::Deploy_airbag_p =1;
+    }
+    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+      @sysvar::Chassis::Deploy_airbag_p =2;
+    } 
+    else{ //둘다 터져
+      @sysvar::Chassis::Deploy_airbag_p =3;
+    }
+ }
+  else{ //둘 다 없어
+      @sysvar::Chassis::Deploy_airbag_p =0;
+ }
+   
+ }

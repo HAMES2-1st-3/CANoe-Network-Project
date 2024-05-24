@@ -1,0 +1,22 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  
+}
+
+
+on message 0x700
+{
+  if(@sysvar::Test::test==1){
+    @sysvar::Test::test=0;
+  }else{
+    @sysvar::Test::test=1;
+  }
+  
+}
+

@@ -1,0 +1,136 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  
+}
+/*
+<Channels info> 
+  CAN1(powertrain)
+  CAN2(body)
+  CAN3(chassis)
+*/
+
+//powertrain Gateway
+on message CAN1::ODS_passenger //body와 chassis 모두 전송 케이스
+{
+  message *msgtochassis;
+  message *msgtobody;
+  msgtochassis=this; 
+  msgtochassis.can=3; //ACU
+  
+  output(msgtochassis);  //그대로 전송해줌(게이트웨이역할)
+  
+  msgtobody=this; 
+  msgtobody.can=2; //BCM
+  
+  output(msgtobody);  //그대로 전송해줌(게이트웨이역할)
+}
+
+on message CAN1::ECM_rpm_m,CAN1::ECM_rpm_s,CAN1::ECM_ct_m,CAN1::ECM_ct_s,CAN1::ECM_inspection_m,CAN1::ECM_inspection_s
+{
+  message *msg;
+  
+  msg=this; 
+  msg.can=3; //CLU
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)
+}
+
+on message CAN1::TCU_gear
+{
+  message *msg;
+  
+  msg=this; 
+  msg.can=3; //CLU
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)
+}
+
+
+
+
+//Body Gateway
+on message CAN2::BCM_light //다음의 메시지 받으면 채널 옮긴다 
+{
+  message * msg;
+  msg=this; //현재 받은 메시지 그대로 msg에 넣어줌
+  msg.can=3; // CAN3(chassis)로 채널 변경 CLU
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)
+}
+on message CAN2::BCM_hazard //다음의 메시지 받으면 채널 옮긴다 
+{
+  message * msg;
+  msg=this; //현재 받은 메시지 그대로 msg에 넣어줌
+  msg.can=3; // CAN3(chassis)로 채널 변경 CLU
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)
+}
+
+on message CAN2::BCM_seatbelt //다음의 메시지 받으면 채널 옮긴다 
+{
+  //message *msg;
+  message * msg;
+  msg=this; //현재 받은 메시지 그대로 msg에 넣어줌
+  msg.can=3; // CAN3(chassis)로 채널 변경 CLU
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)
+}
+
+on message CAN2::DMS_driverstate//다음의 메시지 받으면 채널 옮긴다 
+{
+  message *msg;
+  
+  msg=this; //현재 받은 메시지 그대로 msg에 넣어줌
+  msg.can=3; // CAN3(chassis)로 채널 변경  ACC
+  
+  output(msg);  //그대로 전송해줌(게이트웨이역할)   
+  
+}
+
+//chassis Gateway
+
+on message CAN3::ACU_crashstate{
+  message *msg;
+  msg=this;
+  msg.can=2;// CAN2(body)로 채널 변경 BCM
+  
+  output(msg);
+}
+
+on message CAN3.chassis::ACC_setvelo{
+  message *msg;
+  msg=this;
+  msg.can=1;// CAN1(pt)로 채널 변경   ECM_M, ECM_S
+  
+  output(msg);
+}
+
+on message CAN3.chassis::HECU_brake{
+  message *msg;
+  msg=this;
+  msg.can=1;// CAN1(pt)로 채널 변경  ECM_M, ECM_S
+  
+  output(msg);
+}
+
+on message CAN3.chassis::CLU_odometer{
+  message *msg;
+  msg=this;
+  msg.can=1;// CAN1(pt)로 채널 변경  ECM_M , ECM_S
+  
+  output(msg);
+}
+on message CAN3.chassis::CLU_drivingmode{
+  message *msg;
+  msg=this;
+  msg.can=1;// CAN1(pt)로 채널 변경 ECM_M , ECM_S
+  
+  output(msg);
+}
+
