@@ -6,8 +6,8 @@ includes
 
 variables //전역변수
 {
-  int driver_exist=1; //ODS로부터 받는 운전자 존재 여부 저장 0 세팅할 것
-  int passenger_exist=1; //ODS로부터 받는 동승자 존재 여부 저장 0세팅 것
+  int driver_exist=1; //ODS로부터 받는 운전자 존재 여부 저장 (0 세팅할 것)
+  int passenger_exist=1; //ODS로부터 받는 동승자 존재 여부 저장 (0 세팅할 것)
   
 }
 
@@ -42,88 +42,126 @@ on sysvar Chassis::Right_crashsensor{
 }
 
 
- void deploy_airbag(int driver,int passenger){
-     //sysvar 변수값 (터졌을 때)
+ void deploy_airbag(int driver,int passenger){ //운전자, 승객 존재 확인 후 에어백 터트린다
+     //sysvar 변수인 Deploy_airbag_d, Deploy_airbag_p 값 0~3
+     // 0, 1, 2, 3에 따라 에어백 이미지 달라진다  
    
+  if(driver==1&&passenger==0){ //운전자만 탄 경우 (FL)
+      
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      @sysvar::Chassis::Deploy_airbag_p =0;
+      
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_d =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+        @sysvar::Chassis::Deploy_airbag_d =1;
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_d =2;    
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_d =3;
+      }
+    }
+    
+    
+    
+    
+  }
+  else if(driver==1&&passenger==1){ //운전자, 탑승자 모두 탄 경우 (FL, FR)
+  
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      //운전자
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_d =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+        @sysvar::Chassis::Deploy_airbag_d =1;
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_d =2;
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_d =3;
+      }
+      //동승자
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_p=0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+        @sysvar::Chassis::Deploy_airbag_p =1;
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_p =2;
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_p =3;
+      }
+      
+    }
+    
+    
+    
+  }
+  else if(driver==0&&passenger==1){ //운전자 없고 탑승자만 (FR)
+    
+    
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      @sysvar::Chassis::Deploy_airbag_d =0;
+      
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_p =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+        @sysvar::Chassis::Deploy_airbag_p =1;
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_p =2;
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_p =3;
+      }
+    }
+    
+  }
+  else{ //아무도 탑승 안함
+      @sysvar::Chassis::Deploy_airbag_d =0;
+      @sysvar::Chassis::Deploy_airbag_p =0;
+  }
+   
+ }
+ 
+ void sendCrashMessage(){
    //좌,우, 직진 하나라도 센서값 1이면 메시지 전송(IL 알아서)
    if(@sysvar::Chassis::Front_crashsensor==1||@sysvar::Chassis::Left_crashsensor==1||@sysvar::Chassis::Right_crashsensor==1){
      $chassis::ACU::ACU_crashstate::sig_crashstate=1;
    }else{
      $chassis::ACU::ACU_crashstate::sig_crashstate=0;
    }
-   
-  //운전자, 승객 존재 확인 후 에어백 터트려
-   
-  if(driver==1&&passenger==0){ //운전자만 탄 경우 (FL)
-     @sysvar::Chassis::Deploy_airbag_p =0;
-    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
-        @sysvar::Chassis::Deploy_airbag_d =0;
-
-    } 
-    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
-      @sysvar::Chassis::Deploy_airbag_d =1;
-  
-    }
-    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
-      @sysvar::Chassis::Deploy_airbag_d =2;
-   
-    } 
-    else{ //둘다 터져
-      @sysvar::Chassis::Deploy_airbag_d =3;
-
-    }
-    
-    
-  }
-  else if(driver==1&&passenger==1){ //운전자, 탑승자 모두 탄 경우 (FL, FR)
-  
-    //운전자
-    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
-      @sysvar::Chassis::Deploy_airbag_d =0;
-    } 
-    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
-      @sysvar::Chassis::Deploy_airbag_d =1;
-    }
-    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
-      @sysvar::Chassis::Deploy_airbag_d =2;
-    } 
-    else{ //둘다 터져
-      @sysvar::Chassis::Deploy_airbag_d =3;
-    }
-    
-    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
-      @sysvar::Chassis::Deploy_airbag_p=0;
-    } 
-    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
-      @sysvar::Chassis::Deploy_airbag_p =1;
-    }
-    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
-      @sysvar::Chassis::Deploy_airbag_p =2;
-    } 
-    else{ //둘다 터져
-      @sysvar::Chassis::Deploy_airbag_p =3;
-    }
-    
  }
-  else if(driver==0&&passenger==1){ //운전자 없고 탑승자만 (FR)
-    
-     @sysvar::Chassis::Deploy_airbag_d =0;
-    
-    if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
-      @sysvar::Chassis::Deploy_airbag_p =0;
-    } 
-    else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
-      @sysvar::Chassis::Deploy_airbag_p =1;
-    }
-    else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
-      @sysvar::Chassis::Deploy_airbag_p =2;
-    } 
-    else{ //둘다 터져
-      @sysvar::Chassis::Deploy_airbag_p =3;
-    }
- }
-  else{ //둘 다 없어
-      @sysvar::Chassis::Deploy_airbag_p =0;
- }
-   
+ void airbag_failure(){ //에어백 고장으로 터지지 않음
+   @sysvar::Chassis::Deploy_airbag_p =0;
+   @sysvar::Chassis::Deploy_airbag_d =0;
  }

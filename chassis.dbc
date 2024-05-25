@@ -48,8 +48,8 @@ BO_ 305 DMS_driverstate: 1 Gateway
  SG_ sig_drowsy : 0|7@1+ (1,0) [0|127] "%"  ACC
 
 BO_ 289 TCU_gear: 1 Gateway
- SG_ sig_gear_dir : 0|1@1+ (1,0) [0|1] "flag" Vector__XXX
- SG_ sig_gearstep : 1|3@1+ (1,0) [0|7] "stage"  CLU
+ SG_ sig_gear_dir : 3|1@1+ (1,0) [0|1] "flag" Vector__XXX
+ SG_ sig_gearstep : 0|3@1+ (1,0) [0|7] "stage"  CLU
 
 BO_ 275 ECM_ct_m: 2 Gateway
  SG_ sig_temp : 0|16@1- (0.1,0) [-3276.8|3276.7] "¡ÆC"  CLU

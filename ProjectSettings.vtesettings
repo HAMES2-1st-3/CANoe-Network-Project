@@ -115,7 +115,11 @@
 &lt;/ColumnProperties&gt;
 &lt;/ColumnsProperties&gt;
 &lt;Key&gt;Embedded/NetworkSymbols&lt;/Key&gt;
-&lt;NodeTreeProperties /&gt;
+&lt;NodeTreeProperties&gt;
+&lt;NodeProperties&gt;
+&lt;NodeKey&gt;{RootSymbolItem/chassis{VNetworkItem/{SignalGroupItem&lt;/NodeKey&gt;
+&lt;/NodeProperties&gt;
+&lt;/NodeTreeProperties&gt;
 &lt;/ViewProperties&gt;
 &lt;ViewProperties&gt;
 &lt;ColumnsProperties&gt;
@@ -213,6 +217,12 @@
 &lt;NodeTreeProperties&gt;
 &lt;NodeProperties&gt;
 &lt;NodeKey&gt;{RootSymbolItem/{SysVarGroupItem/Test&lt;/NodeKey&gt;
+&lt;/NodeProperties&gt;
+&lt;NodeProperties&gt;
+&lt;NodeKey&gt;{RootSymbolItem/{SysVarGroupItem/ACU&lt;/NodeKey&gt;
+&lt;/NodeProperties&gt;
+&lt;NodeProperties&gt;
+&lt;NodeKey&gt;{RootSymbolItem/{SysVarGroupItem/Chassis&lt;/NodeKey&gt;
 &lt;/NodeProperties&gt;
 &lt;/NodeTreeProperties&gt;
 &lt;/ViewProperties&gt;

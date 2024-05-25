@@ -1,0 +1,41 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  
+  int driver_exist=0; //ODS로부터 받는 운전자 존재 여부 저장 0 세팅할 것
+  int passenger_exist=0; //ODS로부터 받는 동승자 존재 여부 저장 0세팅 것
+}
+
+
+
+testcase NewTestCase()
+{
+  int i=0;
+  int j=0;
+  for(i=0;i<2;i++)
+  {
+    for(j=0;j<2;j++){
+  
+      driver_exist=i;
+      passenger_exist=j;
+      
+      testWaitForTimeout(5);
+      testValidateSignalMatch("ID",chassis::ACU::ACU_crashstate::sig_crashstate,1);
+    }
+  }
+  
+  
+}
+
+
+
+void MainTest ()
+{
+   NewTestCase();
+}
+
