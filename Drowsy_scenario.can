@@ -1,0 +1,41 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  
+}
+
+
+void MainTest()
+{
+  @sysvar::Powertrain::passenger_fl = 1; // 운전자 탑승
+  @sysvar::Body::driver_seat::seatBelt_indi = 1; // 운전자 안전벨트 착용
+  testWaitForTimeout(3000); // 탑승 3초 후 rpm 2000 설정
+  @sysvar::Powertrain::user_rpm = 2000;
+  testWaitForTimeout(3000); // 3초 뒤 17%의 졸음 정도 설정
+  Drowsy(17, 1, 3, 0); // nothing
+  testWaitForTimeout(3000); // 3초 뒤 30%의 졸음 정도 설정
+  Drowsy(30, 2, 4, 0); // seat
+  testWaitForTimeout(3000); // 3초 뒤 60%의 졸음 정도 설정
+  Drowsy(60, 3, 5, 0); // belt
+  testWaitForTimeout(3000); // 3초 뒤 80%의 졸음 정도 설정
+  Drowsy(80, 4, 2, 17);  // window
+}
+
+
+testcase Drowsy(int drowsy,int display, int state, int window)
+{
+  testCaseDescription("졸음 정도에 따른 시트 진동, 벨트 조임, 창문 개폐 기능·비기능 테스트");
+  $body::DMS_driverstate::sig_droswy = drowsy;
+  testWaitForTimeout(50);
+  testValidateSignalMatch("대시보드 알림", sysvar::Body::popup_state, display); // 대시보드
+  if(window == 0){
+    testValidateSignalMatch("운전자석 기능", sysvar::Body::driver_state, state); // 시트 진동
+  }
+  testWaitForTimeout(4950);
+  testValidateSignalMatch("창문 개폐", sysvar::Body::driver_seat::window_indi, window); // 창문
+}

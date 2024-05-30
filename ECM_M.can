@@ -1,0 +1,105 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables 
+{
+  int i =0;
+  int previous_diag_state=0;
+  int current_diag_state =0;
+  float gearratio[5] ={3.665,2.396,1.610,1.190,1}; // 기어단에 따른 기어비 
+  int pre_gearstep=1;
+  int temp_gearstep=1;
+  int pre_diag0=0;
+  int pre_diag1 =0;
+}
+
+on start
+{
+  @sysvar::Powertrain::MAF_sensor=0;
+  @sysvar::Powertrain::diag_state=0;
+  @sysvar::Powertrain::user_rpm =0;
+  @sysvar::Powertrain::sys_broken =0; 
+}
+
+on key 'a'
+{
+ @sysvar::Powertrain::user_rpm++;
+}
+
+on key'b'
+{
+@sysvar::Powertrain::user_rpm--;  
+}
+
+on sysvar sysvar::Powertrain::user_rpm
+{
+  $ECM_M::sig_rpm = @this;
+}
+on signal powertrain::ECM_M::ECM_speed_m::sig_rpm 
+{
+  i = $sig_gearstep;
+  @sysvar::Powertrain::MAF_sensor = this/8000 *100; // accelerator에 비례하여 변화하는 MAF_sensor값 
+  @sysvar::Powertrain::user_rpm =this;
+  $ECM_M::sig_velo = (this * 60 * 738 * 3.14)/(gearratio[i-1] * 3.909*1000000); //rpm과 gearstep에 따른 velo계산
+}
+
+on sysvar_update Powertrain::diag_state
+{
+  message ECM_inspection_m msg;
+  if($sig_driven_distance >=20000)
+  {
+    if(@sysvar::Powertrain::diag_state==1)
+    {
+        msg.sig_engine_oil = 0;
+        msg.sig_plug = 0;
+        msg.sig_air_filter = 0;
+        msg.sig_coolant=0;
+        if(pre_diag1 ==0) output(msg);
+        pre_diag1 =1;
+    }
+  }
+}
+
+on signal sig_driven_distance
+{
+  message ECM_inspection_m msg;
+  if($sig_driven_distance >=20000)
+  {
+    if(@sysvar::Powertrain::diag_state==0)
+    {
+        msg.sig_engine_oil = 1;
+        msg.sig_plug = 1;
+        msg.sig_air_filter = 1;
+        msg.sig_coolant=1;
+        if(pre_diag0 ==0) output(msg);
+        pre_diag0 =1;
+    }
+  }
+}
+
+on signal sig_brake
+{
+  $ECM_M::sig_rpm = $ECM_M::sig_rpm - ($ECM_M::sig_rpm*this * 0.01); // brake의 비율에 반비례하며 rpm 감소 
+}
+
+
+on signal sig_gearstep // 기어단수 변화에 따른 RPM 갱신  
+{
+   temp_gearstep = $sig_gearstep;
+   $ECM_M::sig_rpm = $ECM_M::sig_rpm * gearratio[temp_gearstep-1]/gearratio[pre_gearstep-1];
+   pre_gearstep = temp_gearstep;
+   @sysvar::Powertrain::user_rpm =$ECM_M::sig_rpm;
+}
+
+on sysvar Powertrain::sys_broken
+{
+  message ECM_broken_m msg;
+  if(@this ==1)
+  { 
+  msg.sig_broken = @this;
+  output(msg);
+  }
+}

@@ -1,0 +1,141 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  float limit = 0.005;
+  msTimer my_timer;
+  message powertrain::ECM_speed_s s_msg;
+}
+
+void MainTest ()
+{
+//  distance_test();
+//  warning_test();
+//  engine_test();
+//  light_test();
+  master_broken_test();
+}
+
+on timer my_timer{
+  s_msg.sig_rpm = 1000;
+  s_msg.sig_velo = 100;
+  output(s_msg);
+}
+testcase distance_test()
+{
+  float ans = 4.875;
+  testCaseComment("RPM과 기어에 따른 거리 계산 테스트");
+  $powertrain::ECM_M::ECM_speed_m::sig_rpm = 1000; // rpm: 1000
+  $powertrain::TCU::TCU_gear::sig_gearstep = 1; // gear: 1
+  testWaitForTimeout(10000);        // 10s
+  testValidateSignalInRange("ID", sysvar::Chassis::total_distance, ans-limit, ans+limit );
+}
+
+testcase warning_test(){
+  int i;
+  testCaseComment("클러스터 경고등 표시 테스트");
+  $powertrain::ECM_M::ECM_ct_m::sig_temp = 30;
+  testWaitForTimeout(50);
+  testValidateSignalMatch("Overl-cool", sysvar::Chassis::temp_state, 2);
+  $powertrain::ECM_M::ECM_ct_m::sig_temp = 120;
+  testWaitForTimeout(50);
+  testValidateSignalMatch("Over-heat", sysvar::Chassis::temp_state, 1);
+  @sysvar::Powertrain::passenger_fl = 1;
+  testWaitForTimeout(10);
+  @sysvar::Powertrain::passenger_fr = 1;
+  testWaitForTimeout(10);
+  for(i = 0; i<=1; i++){
+    @sysvar::Body::driver_seat::seatBelt_indi = i;
+    @sysvar::Body::passenger_seat::seatBelt_indi = i;
+    testWaitForTimeout(10);
+    testValidateSignalMatch("Driver seatbelt warning", chassis::BCM_seatbelt::sig_driver_belt, 1-i);
+    testValidateSignalMatch("Passenger seatbelt warning", chassis::BCM_seatbelt::sig_passenger_belt, 1-i);
+  }
+}
+testcase master_broken_test()
+{
+  message powertrain::ECM_broken_m m_broken;
+  testCaseComment("Master ECM 고장 시나리오 테스트");
+  
+  m_broken.sig_broken = 1;
+  output(m_broken); // Master 고장
+//  testWaitForTimeout(1000);
+  
+//  setTimerCyclic(my_timer, 5);
+  $powertrain::ECM_M::ECM_speed_m::sig_rpm= -1000; 
+  $powertrain::ECM_S::ECM_speed_s::sig_rpm= 1000; 
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Broken Master", sysvar::Chassis::curr_rpm, 1000);
+}
+
+testcase engine_test()
+{
+  int i;
+  testCaseComment("RPM, 기어, 냉각수 온도 표시 기능·비기능 테스트");
+  
+  @sysvar::Powertrain::user_rpm = 2000;
+  testWaitForTimeout(50); // rpm, gear 표시의 데드라인(50ms)
+  testValidateSignalMatch("RPM", sysvar::Chassis::curr_rpm, 2000);
+  testValidateSignalMatch("Gear", chassis::Gateway::TCU_gear::sig_gearstep, 1);
+  
+  $powertrain::ECM_M::ECM_ct_m::sig_temp = 70;
+  testWaitForTimeout(50); // 냉각수 온도 표시의 데드라인(50ms)
+  testValidateSignalMatch("Temperature", sysvar::Chassis::curr_temp, 70);
+}
+
+
+
+testcase light_test()
+{
+  testCaseComment("하향등, 상향등, 미등 on/off 테스트");
+  
+  testCaseComment("하향등 On");
+  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 0;
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Body_highbeam", chassis::sig_highbeam, 0);
+  testValidateSignalMatch("Body_lowbeam", chassis::sig_lowbeam, 1);
+  testValidateSignalMatch("Body_taillight", chassis::sig_taillight, 0);
+  
+//  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 3; //off
+//  testWaitForTimeout(1000);
+  
+//  testCaseComment("미등 On");
+//  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 1;
+////  testWaitForTimeout(1000);
+//  testValidateSignalMatch("Body_highbeam", chassis::sig_highbeam, 0);
+//  testValidateSignalMatch("Body_lowbeam", chassis::sig_lowbeam, 0);
+//  testValidateSignalMatch("Body_taillight", chassis::sig_taillight, 1);
+  
+//  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 3; //off
+//  testWaitForTimeout(1000);
+  
+//  testCaseComment("AUTO 라이트(낮)");
+//  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 2;
+//  @sysvar::dayNnight = 0; // day
+//  testWaitForTimeout(1000);
+//  testValidateSignalMatch("Body_highbeam", chassis::sig_highbeam, 0);
+//  testValidateSignalMatch("Body_lowbeam", chassis::sig_lowbeam, 0);
+//  testValidateSignalMatch("Body_taillight", chassis::sig_taillight, 0);
+////  testWaitForTimeout(1000);
+//  testCaseComment("AUTO 라이트(밤)");
+//  @sysvar::dayNnight = 1; // night
+//  testWaitForTimeout(1000);
+//  testValidateSignalMatch("Body_highbeam", chassis::sig_highbeam, 0);
+//  testValidateSignalMatch("Body_lowbeam", chassis::sig_lowbeam, 1);
+//  testValidateSignalMatch("Body_taillight", chassis::sig_taillight, 0);
+  
+  
+//  testCaseComment("라이트 Off");
+//  @sysvar::Body::headlight_switch::turn_signal_lever_indi = 3;
+////  testWaitForTimeout(1000);
+//  testValidateSignalMatch("Body_highbeam", chassis::sig_highbeam, 0);
+//  testValidateSignalMatch("Body_lowbeam", chassis::sig_lowbeam, 0);
+//  testValidateSignalMatch("Body_taillight", chassis::sig_taillight, 0);
+}
+
+
+

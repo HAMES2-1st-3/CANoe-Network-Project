@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<testmodule starttime="2024-05-25 17:08:08" timestamp="8.933359" verdicts="2_basic" reportrunstate="TestComplete" abortmode="None" reportuniqueid="1bfe3a0d-4218-4e72-8196-3bb420f25d1c" measurementid="6f0b6028-76e9-475b-8b04-da8222f22c7e">
+  <testcase starttime="2024-05-25 17:08:08" timestamp="8.933359" tcnumber="1">
+    <verdict time="2024-05-25 17:08:08" timestamp="8.933359" endtime="2024-05-25 17:08:10" endtimestamp="10.933359" result="pass" />
+    <title>body_input_test</title>
+  </testcase>
+  <verdict time="2024-05-25 17:08:08" timestamp="8.933359" endtime="2024-05-25 17:08:10" endtimestamp="10.933359" result="pass" />
+  <title>Test 1</title>
+  <engineer>
+    <xinfo>
+      <name>Windows Login Name</name>
+      <description>user</description>
+    </xinfo>
+  </engineer>
+  <testsetup>
+    <xinfo>
+      <name>Version</name>
+      <description>CANoe.CAN /pro 17.3.91 (SP3)</description>
+    </xinfo>
+    <xinfo>
+      <name>Configuration</name>
+      <description>C:\Users\user\Downloads\pj3\pj3\pj3.cfg</description>
+    </xinfo>
+    <xinfo>
+      <name>Database body on body</name>
+      <description>C:\Users\user\Downloads\pj3\pj3\body.dbc (2024-05-23 18:37:43)</description>
+    </xinfo>
+    <xinfo>
+      <name>Database chassis on chassis</name>
+      <description>C:\Users\user\Downloads\pj3\pj3\chassis.dbc (2024-05-25 16:20:45)</description>
+    </xinfo>
+    <xinfo>
+      <name>Database powertrain on powertrain</name>
+      <description>C:\Users\user\Downloads\pj3\pj3\powertrain.dbc (2024-05-25 15:25:56)</description>
+    </xinfo>
+    <xinfo>
+      <name>Test Module Name</name>
+      <description>Test 1</description>
+    </xinfo>
+    <xinfo>
+      <name>Test Module File</name>
+      <description>C:\Users\user\Downloads\pj3\pj3\CLU_test1.can</description>
+    </xinfo>
+    <xinfo>
+      <name>Last modification of Test Module File</name>
+      <description>2024-05-25, 17:07:50</description>
+    </xinfo>
+    <xinfo>
+      <name>Windows Computer Name</name>
+      <description>DESKTOP-DPGGMA5</description>
+    </xinfo>
+    <xinfo>
+      <name>Nodelayer Module CANoeILNLVector</name>
+      <description>CANoe Interaction Layer NL (Vector) Version 3.30.113 (Feb 16 2023 15:33:52) , c:\ProgramData\Vector\AddOn Packages\Vector AddOn\vModules\CANoe_14_0\Exec32\CANoeILNLVector.dll</description>
+    </xinfo>
+  </testsetup>
+</testmodule>

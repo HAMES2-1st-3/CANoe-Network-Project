@@ -6,6 +6,50 @@ includes
 
 variables
 {
-  
 }
 
+on start
+{
+  @sysvar::Powertrain::passenger_fl =0;
+  @sysvar::Powertrain::passenger_fr =0;
+  @sysvar::Powertrain::class_val =0;
+  @sysvar::Powertrain::show_passenger_fr = 0;
+}
+on sysvar sysvar::Powertrain::passenger_fl //passenger_fl 변할경우 msg send 
+{
+  message powertrain::ODS_passenger msg;
+  msg.sig_driver_present = @this;
+  msg.sig_passenger_present = $sig_passenger_present;
+  msg.sig_class = $sig_class;
+  output(msg);
+}
+
+on sysvar sysvar::Powertrain::passenger_fr //passenger_fr 변할경우 msg send 
+{
+  message powertrain::ODS_passenger msg;
+  if(@sysvar::Powertrain::passenger_fr == 1){
+    @sysvar::Powertrain::show_passenger_fr = 1; // show adult 
+  }
+  else{
+    @sysvar::Powertrain::show_passenger_fr = 0; // show no one
+  }
+  msg.sig_passenger_present = @this;
+  msg.sig_driver_present = $sig_driver_present;
+  msg.sig_class = $sig_class;
+  output(msg);
+}
+
+on sysvar sysvar::Powertrain::class_val //class_val 변할경우 msg send 
+{
+  message powertrain::ODS_passenger msg;
+  if(@sysvar::Powertrain::class_val == 1){
+    @sysvar::Powertrain::show_passenger_fr = 2; // show child 
+  }
+  else{
+    @sysvar::Powertrain::show_passenger_fr = 1; // show adult
+  }
+  msg.sig_class = @this; // 0:adult 1:child
+  msg.sig_driver_present =$sig_driver_present;
+  msg.sig_passenger_present = $sig_passenger_present;
+  output(msg);
+}

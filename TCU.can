@@ -1,0 +1,147 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  int prespeed=0;
+  int curspeed=0;
+  int g_gearstep=1; //기어 단 수(1~5)
+  int flag=0;
+  
+  int flag_ECM_S=0;//ECM_S 사용 여부
+}
+
+on message powertrain::ECM_broken_m
+{
+  flag_ECM_S=1;
+}
+
+on message powertrain::ECM_broken_s
+{
+  ; //없음
+}
+
+on message powertrain::ECM_speed_m
+{
+  //5단 : 최대 8000까지
+  //1단 : 0~2500까지 올라가고
+  //2단~4단 : 1500 최저   2500 최고 rpm
+  message TCU_gear msg;
+  
+  curspeed=$ECM_speed_m::sig_rpm;
+  
+  if(g_gearstep==1){
+    
+    if(curspeed>=2500){
+      g_gearstep++;
+      flag=1;
+      prespeed=1500;//이전과 비교하기 위해
+      msg.sig_gearstep=g_gearstep;//이벤트성 
+      output(msg);
+    }
+  }
+  else if(g_gearstep>=2&&g_gearstep<=4){
+    
+    //이전 대비 속도 감소
+    if(curspeed<prespeed&& curspeed<=1500){
+      g_gearstep--;
+      flag=1;
+      prespeed=2500;//이전과 비교하기 위해
+      msg.sig_gearstep=g_gearstep;//이벤트성 
+      output(msg);
+    }
+    //이전 대비 속도 증가
+    if(curspeed>prespeed&&curspeed>=2500){
+      g_gearstep++;
+      flag=1;
+      prespeed=1500;//이전과 비교하기 위해
+      msg.sig_gearstep=g_gearstep;//이벤트성 
+      output(msg);
+    }
+  }
+  else if(g_gearstep==5){
+    
+    if(curspeed<prespeed&&curspeed<=1500){
+      g_gearstep--;
+      flag=1;
+      prespeed=2500;//이전과 비교하기 위해
+      msg.sig_gearstep=g_gearstep;//이벤트성 
+      output(msg);
+    }
+  }
+  else{ //기어 단 수 5까지뿐
+    ;
+  }
+  
+  if(!flag) prespeed=curspeed; //기어 변할시에는 이전 정보 저장 안함
+  
+  
+  $TCU_gear::sig_gearstep=g_gearstep;//주기성
+  flag=0;
+}
+
+on message powertrain::ECM_speed_s
+{
+  
+  if(flag_ECM_S){
+    message TCU_gear msg;
+    
+    curspeed=$ECM_speed_s::sig_rpm;
+    
+    if(g_gearstep==1){
+      
+      if(curspeed>=2500){
+        g_gearstep++;
+        flag=1;
+        prespeed=1500;//이전과 비교하기 위해
+        msg.sig_gearstep=g_gearstep;//이벤트성 
+        output(msg);
+      }
+    }
+    else if(g_gearstep>=2&&g_gearstep<=4){
+      
+      //이전 대비 속도 감소
+      if(curspeed<prespeed&& curspeed<=1500){
+        g_gearstep--;
+        flag=1;
+        prespeed=2500;//이전과 비교하기 위해
+        msg.sig_gearstep=g_gearstep;//이벤트성 
+        output(msg);
+      }
+      //이전 대비 속도 증가
+      if(curspeed>prespeed&&curspeed>=2500){
+        g_gearstep++;
+        flag=1;
+        prespeed=1500;//이전과 비교하기 위해
+        msg.sig_gearstep=g_gearstep;//이벤트성 
+        output(msg);
+      }
+    }
+    else if(g_gearstep==5){
+      
+      if(curspeed<prespeed&&curspeed<=1500){
+        g_gearstep--;
+        flag=1;
+        prespeed=2500;//이전과 비교하기 위해
+        msg.sig_gearstep=g_gearstep;//이벤트성 
+        output(msg);
+      }
+    }
+    else{ //기어 단 수 5까지뿐
+      ;
+    }
+    
+    if(!flag) prespeed=curspeed; //기어 변할시에는 이전 정보 저장 안함
+    
+    
+    $TCU_gear::sig_gearstep=g_gearstep;//주기성
+    flag=0;
+    
+  }
+  else{
+    
+  }
+}

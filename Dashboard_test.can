@@ -1,0 +1,95 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  
+}
+
+testcase driverstate_test()
+{
+  $sig_droswy= 30;
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Drowsy Pop-up", sysvar::Body::popup_state, 1);
+  $sig_droswy= 0;
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Drowsy Pop-up", sysvar::Body::popup_state, 0);
+}
+
+
+
+testcase passenger_airbag_off_test()
+{
+  message body::ODS_passenger msg;
+  msg.sig_passenger_present = 0;
+  output(msg);
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Passenger Airbag Off", sysvar::Body::airbag_off, 1);
+  
+  
+  msg.sig_passenger_present = 1;
+  output(msg);
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Passenger Airbag Off", sysvar::Body::airbag_off, 0);
+}
+
+
+
+testcase engine_inspection_test()
+{
+  message powertrain::ECM_inspection_m m_msg;
+  message powertrain::ECM_inspection_s s_msg;
+  message powertrain::ECM_broken_m broken_msg;
+  int i;
+  int broken;
+  
+  /* Check ECM_M's inspection signal in Dashboard */
+  for(i = 1; i>=0; i--){
+    m_msg.sig_air_filter = i;
+    m_msg.sig_coolant = i;
+    m_msg.sig_engine_oil = i; 
+    m_msg.sig_plug = i;
+    output(m_msg);
+    testWaitForTimeout(1000);
+    testValidateSignalMatch("Engine Inspection", sysvar::Body::display, i);
+  }
+
+  /* When ECM_M is broken, Check ECM_S's inspection signal in Dashboard */
+  broken_msg.sig_broken = 1;
+  output(broken_msg);
+  
+  m_msg.sig_air_filter = 0;
+  m_msg.sig_coolant = 0;
+  m_msg.sig_engine_oil = 0; 
+  m_msg.sig_plug = 0;
+  s_msg.sig_air_filter = 1;
+  s_msg.sig_coolant = 1;
+  s_msg.sig_engine_oil = 1; 
+  s_msg.sig_plug = 1;
+  output(m_msg);
+  output(s_msg);
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Broken ECM Master", sysvar::Body::display, 1);
+}
+
+
+
+testcase crashstate_test()
+{
+  $chassis::ACU_crashstate::sig_crashstate = 1;
+  testWaitForTimeout(1000);
+  testValidateSignalMatch("Crashstate", sysvar::Body::display, 2);
+}
+
+void MainTest ()
+{
+  driverstate_test();
+  passenger_airbag_off_test();
+  engine_inspection_test();
+  crashstate_test();
+}
+
+

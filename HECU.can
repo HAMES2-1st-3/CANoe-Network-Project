@@ -1,0 +1,77 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+}
+
+variables
+{
+  int brake = 0; // 0: not working, 1: working
+  message HECU_brake msg_hecu_brake;
+  msTimer brakeTimer;
+  const int brakeIncrement = 1; // 브레이크가 작동할 때 증가하는 값
+  const int brakeDecrement = 1; // 브레이크가 작동하지 않을 때 감소하는 값
+  const int maxBrakePosition = 100; // 프로그래스바의 최대 값
+  int countCrash = 0;
+}
+
+on start
+{
+  @sysvar::Chassis::brake = 0;
+  @sysvar::Chassis::brake_position = 0;
+  
+  // 타이머 설정: 10ms 주기로 실행
+  setTimerCyclic(brakeTimer, 10);
+}
+
+on timer brakeTimer
+{
+  if (@sysvar::Chassis::brake == 1)
+  {
+    // 브레이크가 작동 중일 때
+    if (@sysvar::Chassis::brake_position < maxBrakePosition)
+    {
+      @sysvar::Chassis::brake_position += brakeIncrement;
+    }
+  }
+  else
+  {
+    // 브레이크가 작동 중이 아닐 때
+    if (@sysvar::Chassis::brake_position > 0)
+    {
+      @sysvar::Chassis::brake_position -= brakeDecrement;
+    }
+  }
+  
+  // brake_position의 유효 범위를 유지
+  if (@sysvar::Chassis::brake_position > maxBrakePosition)
+  {
+    @sysvar::Chassis::brake_position = maxBrakePosition;
+  }
+  else if (@sysvar::Chassis::brake_position < 0)
+  {
+    @sysvar::Chassis::brake_position = 0;
+  }
+}
+
+on message ACU_crashstate {
+  
+  /*---------------- not crash ----------------------*/
+  if( $ACU_crashstate::sig_crashstate == 0){
+    //TODO: Action if car is not crashed
+    msg_hecu_brake.sig_brake = @sysvar::Chassis::brake_position;
+  }
+  else{
+    //TODO: Action if car is crashed
+    @sysvar::Chassis::brake = 1;
+    if(countCrash < 600){
+      msg_hecu_brake.sig_brake = 100;
+      @sysvar::Chassis::brake_position = 100;
+      countCrash++;
+    } 
+    else{
+      msg_hecu_brake.sig_brake = @sysvar::Chassis::brake_position;
+    }
+  }
+  
+  output(msg_hecu_brake);
+}

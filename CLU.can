@@ -1,0 +1,163 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+   // Define the RPM and gear variables
+  long rpm = 0;
+  long velocity = 0;
+  int gear = 0;
+  char master_broken = 0; // 0: master is not broken / 1: master is broken
+  float increase_dist = 20000;
+  // Gear ratios
+  float gear_ratios[5] = {3.665, 2.396, 1.610, 1.190, 1.000};
+
+  // Final drive ratio
+  float final_driveRatio = 3.909;
+
+  // Tire diameter in meters
+  float tire_diameter = 0.65;
+  
+  // current distance
+  float distance = 0;
+
+  // Time interval in seconds (5 ms = 0.005 seconds)
+  const float time_interval = 0.005;
+  msTimer my_timer;
+}
+
+on timer my_timer{
+  // toggle hazard light
+  if(@sysvar::Chassis::hazard_light == 0){
+    @sysvar::Chassis::hazard_light = 1;
+  }
+  else{
+    @sysvar::Chassis::hazard_light = 0;
+  }    
+}
+
+on start
+{
+  master_broken = 0;
+  @Chassis::total_distance = 0;
+  @sysvar::Chassis::curr_rpm = 0;
+  @sysvar::Chassis::curr_velocity = 0;
+  @sysvar::Chassis::increase = 0;
+  @sysvar::Chassis::temp_state = 0;
+}
+
+
+on sysvar sysvar::Chassis::increase{
+  if(@sysvar::Chassis::increase == 1){
+    @Chassis::total_distance += 20000;
+  }
+}
+
+on message chassis::ECM_broken_m{
+  if($chassis::Gateway::ECM_broken_m::sig_broken == 1){
+    master_broken = 1;
+  }
+  else{
+    master_broken = 0;
+  }
+}
+
+on message ECM_ct_m {
+  if(master_broken == 0){ // master is not broken
+    @sysvar::Chassis::curr_temp = $ECM_ct_m::sig_temp;
+    if(@sysvar::Chassis::curr_temp < 50){
+      @sysvar::Chassis::temp_state = 2; // over-cool
+    }
+    else if(@sysvar::Chassis::curr_temp > 100){
+      @sysvar::Chassis::temp_state = 1; // over-heat
+    }
+    else{
+      @sysvar::Chassis::temp_state = 0; // normal
+    }
+  }
+  else{
+    ;
+  }
+}
+
+on message ECM_ct_s {
+  if(master_broken == 1){ // master is broken
+    @sysvar::Chassis::curr_temp = $ECM_ct_s::sig_temp;
+    if(@sysvar::Chassis::curr_temp < 50){
+      @sysvar::Chassis::temp_state = 1; // over-heat
+    }
+    else if(@sysvar::Chassis::curr_temp > 100){
+      @sysvar::Chassis::temp_state = 2; // over-cool
+    }
+    else{
+      @sysvar::Chassis::temp_state = 0; // normal
+    }
+  }
+}
+
+on message ECM_speed_m {
+  if(master_broken == 0){ // master is not broken
+    rpm = $ECM_speed_m::sig_rpm;
+    velocity = $chassis::Gateway::ECM_speed_m::sig_velo;
+    gear = $sig_gearstep;
+    
+    @sysvar::Chassis::curr_rpm = rpm;
+    @sysvar::Chassis::curr_velocity = velocity;
+    distance = calculate_distance(rpm, gear, time_interval);
+    @sysvar::Chassis::total_distance += distance;
+    $sig_driven_distance = (int)@sysvar::Chassis::total_distance;
+  }
+  else{
+    ;
+  }
+}
+
+on message ECU_speed_s {
+  if(master_broken == 1){ // master is broken
+    rpm = $ECU_speed_s::sig_rpm;
+    velocity = $chassis::Gateway::ECU_speed_s::sig_velo;
+    gear = $sig_gearstep;
+    
+    @sysvar::Chassis::curr_rpm = rpm;
+    @sysvar::Chassis::curr_velocity = velocity;
+    
+    distance = calculate_distance(rpm, gear, time_interval);
+    @sysvar::Chassis::total_distance += distance;
+    $sig_driven_distance = (int)@sysvar::Chassis::total_distance;
+  }
+  else{
+    ;
+  }
+}
+
+
+
+
+on signal chassis::Gateway::BCM_hazard::sig_hazard
+{
+  if($chassis::Gateway::BCM_hazard::sig_hazard == 1){
+    setTimerCyclic(my_timer, 500);
+  }
+  else{ // turn off hazard light
+    @sysvar::Chassis::hazard_light = 0;
+    cancelTimer(my_timer);
+  }
+}
+float calculate_distance(long rpm, int gear, float time_seconds)
+{
+  float wheel_revolution_per_sec; // 초당 휠 회전수 
+  float total_wheel_revolution; // n초당 휠 회전수 
+  float tire_circumference; // 타이어 반경
+  if(gear < 1 || gear > 5){
+    write("Invalid gear step");
+    return 0.0;
+  }
+  wheel_revolution_per_sec= (gear_ratios[gear-1] * rpm * final_driveRatio) / 60.0;
+  total_wheel_revolution = wheel_revolution_per_sec * time_seconds;
+  tire_circumference = tire_diameter * 3.14159;
+  return tire_circumference * total_wheel_revolution / 1000;
+}
+

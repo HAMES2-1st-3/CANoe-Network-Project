@@ -1,0 +1,297 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+}
+
+void MainTest ()
+{
+//  DriverOnly();
+//  Driver_Passenger();
+  Driver_Passenger_Child();
+}
+void TestAllCrashAirbag()
+{
+  int dir, class, d, p;
+  for(dir = 0; dir<7; dir++){
+  @sysvar::Chassis::Front_crashsensor = 0;
+  @sysvar::Chassis::Deploy_airbag_d = 0;
+    for(class = 0; class<=1; class++){
+      CrashAirbagState(dir,0, 0, class);
+      CrashAirbagState(dir,1, 0, class);
+      CrashAirbagState(dir,0, 1, class);
+      CrashAirbagState(dir,1, 1, class);
+    }
+  }
+}
+
+testcase CrashAirbagState(int dir,int driver, int passenger, int class)
+{
+  message powertrain::ODS_passenger msg;
+  msg.sig_driver_present = driver;
+  msg.sig_passenger_present = passenger;
+  msg.sig_class = class;
+  output(msg);
+  testWaitForTimeout(100);
+   switch(dir){
+    case 0:
+      @sysvar::Chassis::Front_crashsensor = 1;
+      @sysvar::Chassis::Left_crashsensor  = 0;
+      @sysvar::Chassis::Right_crashsensor = 0;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("FCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 3);
+      }
+      else{
+        testValidateSignalMatch("FCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+          testValidateSignalMatch("FCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 3);
+        else
+          testValidateSignalMatch("FCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else
+        testValidateSignalMatch("FCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      break;
+    case 1: 
+      @sysvar::Chassis::Front_crashsensor = 0;
+      @sysvar::Chassis::Left_crashsensor  = 1;
+      @sysvar::Chassis::Right_crashsensor = 0;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("LCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 2);
+      }
+      else{
+        testValidateSignalMatch("LCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+          testValidateSignalMatch("LCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 0);
+        else
+          testValidateSignalMatch("LCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{
+        testValidateSignalMatch("LCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+    case 2:    
+      @sysvar::Chassis::Front_crashsensor = 0;
+      @sysvar::Chassis::Left_crashsensor  = 0;
+      @sysvar::Chassis::Right_crashsensor = 1;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("RCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      else{
+        testValidateSignalMatch("RCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+      if(class == 0)
+        testValidateSignalMatch("RCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 2);
+        else
+        testValidateSignalMatch("RCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{
+        testValidateSignalMatch("RCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+    case 3:    
+      @sysvar::Chassis::Front_crashsensor = 0;
+      @sysvar::Chassis::Left_crashsensor  = 1;
+      @sysvar::Chassis::Right_crashsensor = 1;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("RLCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 2);
+      }
+      else{
+        testValidateSignalMatch("RLCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+          testValidateSignalMatch("RLCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 2);
+        else
+          testValidateSignalMatch("RLCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{
+        testValidateSignalMatch("RLCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+    case 4:    
+      @sysvar::Chassis::Front_crashsensor = 1;
+      @sysvar::Chassis::Left_crashsensor  = 0;
+      @sysvar::Chassis::Right_crashsensor = 1;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("FRCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 1);
+      }
+      else{
+        testValidateSignalMatch("FRCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+        testValidateSignalMatch("FRCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 3);
+        else
+        testValidateSignalMatch("FRCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{
+        testValidateSignalMatch("FRCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+    case 5:    
+      @sysvar::Chassis::Front_crashsensor = 1;
+      @sysvar::Chassis::Left_crashsensor  = 1;
+      @sysvar::Chassis::Right_crashsensor = 0;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("FLCrash-Driver(O)", sysvar::Chassis::Deploy_airbag_d, 3);
+      }
+      else{
+        testValidateSignalMatch("FLCrash-Driver(X)", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+          testValidateSignalMatch("FLCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 1);
+        else
+          testValidateSignalMatch("FLCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{
+        testValidateSignalMatch("FLCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+    case 6:    
+      @sysvar::Chassis::Front_crashsensor = 1;
+      @sysvar::Chassis::Left_crashsensor  = 1;
+      @sysvar::Chassis::Right_crashsensor = 1;
+      testWaitForTimeout(100);
+      if(driver == 1){
+        testValidateSignalMatch("FRLCrash-Driver", sysvar::Chassis::Deploy_airbag_d, 3);
+      }
+      else{
+        testValidateSignalMatch("FRLCrash-Driver", sysvar::Chassis::Deploy_airbag_d, 0);
+      }
+      if(passenger == 1){
+        if(class == 0)
+          testValidateSignalMatch("FRLCrash-Passenger(Adult)", sysvar::Chassis::Deploy_airbag_p, 3);
+        else
+          testValidateSignalMatch("FRLCrash-Passenger(Child)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      else{    
+        testValidateSignalMatch("FRLCrash-Passenger(X)", sysvar::Chassis::Deploy_airbag_p, 0);
+      }
+      break;
+  }  
+  @sysvar::Chassis::Front_crashsensor = 0;
+  @sysvar::Chassis::Left_crashsensor  = 0;
+  @sysvar::Chassis::Right_crashsensor = 0;
+}
+testcase DriverOnly()
+{
+  testCaseComment("운전자만 탑승한 후 rpm이 2000인 상태에서 충돌이 발생한 경우, 에어백 전개, 자동 전화, 긴급제동의 기능, 비기능 요구사항을 확인한다.");
+  @sysvar::Powertrain::passenger_fl = 1; // 운전자 탑승
+  @sysvar::Powertrain::passenger_fr = 0; // 동승자 미탑승
+  testWaitForTimeout(1000);
+  @sysvar::Body::driver_seat::seatBelt_indi = 1; // 운전자 안전벨트 착용
+  @sysvar::Powertrain::user_rpm = 2000;
+  testWaitForTimeout(3000); // 3초 후 전방 충돌
+  @sysvar::Chassis::Front_crashsensor = 1; // 3초 후 전방 충돌
+  testWaitForTimeout(40); // 에어백 전개 기능 데드라인: 40ms
+  testValidateSignalMatch("Airbag(Driver)", sysvar::Chassis::Deploy_airbag_d, 3);     // deadline: 40ms
+  testValidateSignalMatch("Airbag(Passenger)", sysvar::Chassis::Deploy_airbag_p, 0);  // deadline: 40ms
+  testWaitForTimeout(10); // 자동 전화, 급브레이크, 프리텐셔너 벨트 기능 데드라인: 40ms + 10ms
+  testValidateSignalMatch("Auto-call", sysvar::Body::display, 2);                     // deadline: 50ms
+  testValidateSignalMatch("RPM", powertrain::ECM_speed_m::sig_rpm, 0);                // deadline: 50ms
+  testValidateSignalMatch("Velocity", powertrain::ECM_speed_m::sig_velo, 0);          // deadline: 50ms
+  testValidateSignalMatch("Driver's PretensionerBelt",sysvar::Body::driver_state, 6);        // deadline: 50ms
+  testValidateSignalMatch("Passenger's PretensionerBelt",sysvar::Body::passenger_state, 0);     // deadline: 50ms
+}
+
+testcase PassengerAdultOnly()
+{
+  testCaseComment("성인 동승자만 탑승 한 후 rpm이 2000인 상태에서 충돌이 발생한 경우, 에어백 전개, 자동 전화, 긴급제동의 기능, 비기능 요구사항을 확인한다.");
+  @sysvar::Powertrain::passenger_fl = 0;
+  @sysvar::Powertrain::passenger_fr = 1;
+  @sysvar::Powertrain::class_val = 0;
+  testWaitForTimeout(1000);// after 1s, crash!
+  @sysvar::Chassis::Front_crashsensor = 1;
+  testWaitForTimeout(40);
+  testValidateSignalMatch("Airbag(Driver)", sysvar::Chassis::Deploy_airbag_d, 0);     // deadline: 40ms
+  testValidateSignalMatch("Airbag(Passenger)", sysvar::Chassis::Deploy_airbag_p, 3);  // deadline: 40ms
+  testWaitForTimeout(10);
+  testValidateSignalMatch("Auto-call", sysvar::Body::display, 2);                     // deadline: 50ms
+  testValidateSignalMatch("RPM", powertrain::ECM_speed_m::sig_rpm, 0);                // deadline: 50ms
+  testValidateSignalMatch("Velocity", powertrain::ECM_speed_m::sig_velo, 0);          // deadline: 50ms
+  testValidateSignalMatch("Driver's PretensionerBelt",sysvar::Body::driver_seat::pretensioner_indi, 0);        // deadline: 50ms
+  testValidateSignalMatch("Passenger's PretensionerBelt",sysvar::Body::passenger_seat::pretensioner_indi, 1);     // deadline: 50ms
+}
+testcase PassengerChildOnly()
+{
+  testCaseComment("영유아  동승자만 탑승 한 후 rpm이 2000인 상태에서 충돌이 발생한 경우, 에어백 전개, 자동 전화, 긴급제동의 기능, 비기능 요구사항을 확인한다.");
+  @sysvar::Powertrain::passenger_fl = 0;
+  @sysvar::Powertrain::passenger_fr = 1;
+  testWaitForTimeout(1000); // 꼭 있어야 함
+  @sysvar::Powertrain::class_val = 1;
+  testWaitForTimeout(1000);// after 1s, crash!
+  @sysvar::Chassis::Front_crashsensor = 1;
+  testWaitForTimeout(40);
+  testValidateSignalMatch("Airbag(Driver)", sysvar::Chassis::Deploy_airbag_d, 0);     // deadline: 40ms
+  testValidateSignalMatch("Airbag(Passenger)", sysvar::Chassis::Deploy_airbag_p, 0);  // deadline: 40ms
+  testWaitForTimeout(10);
+  testValidateSignalMatch("Auto-call", sysvar::Body::display, 2);                     // deadline: 50ms
+  testValidateSignalMatch("RPM", powertrain::ECM_speed_m::sig_rpm, 0);                // deadline: 50ms
+  testValidateSignalMatch("Velocity", powertrain::ECM_speed_m::sig_velo, 0);          // deadline: 50ms
+  testValidateSignalMatch("Driver's PretensionerBelt",sysvar::Body::driver_seat::pretensioner_indi, 0);        // deadline: 50ms
+  testValidateSignalMatch("Passenger's PretensionerBelt",sysvar::Body::passenger_seat::pretensioner_indi, 1);     // deadline: 50ms
+}
+
+testcase Driver_Passenger()
+{
+  testCaseComment("운전자, 동승자(성인) 탑승한 후 rpm이 2000인 상태에서 충돌이 발생한 경우, 에어백 전개, 자동 전화, 긴급제동의 기능, 비기능 요구사항을 확인한다.");
+  @sysvar::Powertrain::passenger_fl = 1;
+  testWaitForTimeout(10); 
+  @sysvar::Body::driver_seat::seatBelt_indi = 1;
+  @sysvar::Powertrain::passenger_fr = 1;
+  @sysvar::Body::passenger_seat::seatBelt_indi = 1;
+  testWaitForTimeout(3000);
+  @sysvar::Powertrain::user_rpm = 2000;
+  testWaitForTimeout(3000);
+  @sysvar::Chassis::Front_crashsensor = 1;
+  testWaitForTimeout(40);
+  testValidateSignalMatch("Airbag(Driver)", sysvar::Chassis::Deploy_airbag_d, 3);     // deadline: 40ms
+  testValidateSignalMatch("Airbag(Passenger)", sysvar::Chassis::Deploy_airbag_p, 3);  // deadline: 40ms
+  testWaitForTimeout(10);
+  testValidateSignalMatch("Auto-call", sysvar::Body::display, 2);                     // deadline: 50ms
+  testValidateSignalMatch("RPM", powertrain::ECM_speed_m::sig_rpm, 0);                // deadline: 50ms
+  testValidateSignalMatch("Velocity", powertrain::ECM_speed_m::sig_velo, 0);          // deadline: 50ms
+  testValidateSignalMatch("Driver's PretensionerBelt",sysvar::Body::driver_state, 6);        // deadline: 50ms
+  testValidateSignalMatch("Passenger's PretensionerBelt",sysvar::Body::passenger_state, 3);     // deadline: 50ms
+}
+
+testcase Driver_Passenger_Child()
+{
+  testCaseComment("운전자, 동승자(유아) 탑승한 후 rpm이 2000인 상태에서 충돌이 발생한 경우, 에어백 전개, 자동 전화, 긴급제동의 기능, 비기능 요구사항을 확인한다.");
+  @sysvar::Powertrain::passenger_fl = 1;
+  testWaitForTimeout(10); 
+  @sysvar::Body::driver_seat::seatBelt_indi = 1;
+  @sysvar::Powertrain::passenger_fr = 1;
+  @sysvar::Body::passenger_seat::seatBelt_indi = 1;
+  testWaitForTimeout(10); 
+  @sysvar::Powertrain::class_val = 1; // child
+  testWaitForTimeout(3000); 
+  @sysvar::Powertrain::user_rpm = 2000;
+  testWaitForTimeout(3000); 
+  @sysvar::Chassis::Front_crashsensor = 1;
+  testWaitForTimeout(40);
+  testValidateSignalMatch("Airbag(Driver)", sysvar::Chassis::Deploy_airbag_d, 3);     // deadline: 40ms
+  testValidateSignalMatch("Airbag(Passenger)", sysvar::Chassis::Deploy_airbag_p, 0);  // deadline: 40ms
+  testWaitForTimeout(10);
+  testValidateSignalMatch("Auto-call", sysvar::Body::display, 2);                     // deadline: 50ms
+  testValidateSignalMatch("RPM", powertrain::ECM_speed_m::sig_rpm, 0);                // deadline: 50ms
+  testValidateSignalMatch("Velocity", powertrain::ECM_speed_m::sig_velo, 0);          // deadline: 50ms
+  testValidateSignalMatch("Driver's PretensionerBelt",sysvar::Body::driver_state, 6);        // deadline: 50ms
+  testValidateSignalMatch("Passenger's PretensionerBelt",sysvar::Body::passenger_state, 6);     // deadline: 50ms
+}

@@ -1,0 +1,242 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  const int window_max_state = 17;
+  const int window_min_state = 0;
+  
+  int driver_window_open = 0;
+  int passenger_window_open = 0;
+  int wakeup = 0;
+  msTimer ms100Timer;
+}
+
+on start 
+{
+  setTimerCyclic(ms100Timer, 100);
+  @sysvar::Body::headlight_switch::light_switch_indi = 3;
+  @sysvar::Body::driver_state = 0; // no driver
+  @sysvar::Body::passenger_state = 0; // no driver
+}
+  
+
+on timer ms100Timer{
+  
+  // -----------driver window animation------------------------------
+  if(driver_window_open == 1) {
+    if(@sysvar::Body::driver_seat::window_indi < window_max_state) {
+      @sysvar::Body::driver_seat::window_indi++;
+    } else {
+      //nothing
+    }
+  } else {
+    if(@sysvar::Body::driver_seat::window_indi > window_min_state) {
+      @sysvar::Body::driver_seat::window_indi--;
+    } else {
+      //nothing
+    }
+  }
+  // ---------------------------------------------------------------
+  
+    // -----------passenger window animation------------------------
+  if(passenger_window_open == 1) {
+    if(@sysvar::Body::passenger_seat::window_indi < window_max_state) {
+      @sysvar::Body::passenger_seat::window_indi++;
+      if(@sysvar::Body::passenger_seat::window_indi == window_max_state){
+        wakeup = 1;
+      }
+    } else {
+      //nothing
+    }
+  } else {
+    if(@sysvar::Body::passenger_seat::window_indi > window_min_state) {
+      @sysvar::Body::passenger_seat::window_indi--;
+    } else {
+      //nothing
+    }
+  }
+  // ---------------------------------------------------------------
+  
+}
+
+/* ACU_crashstate::sig_crashstate는 한번 1이 되면 
+ * 시스템이 재부팅되기 전까지 다시 0이 되지 않음.
+ * 코드에서 충돌 상태가 해제 되는 경우는 고려되지 않음
+ */
+on message CAN2::ACU_crashstate {
+  if(this.sig_crashstate == 1) {
+    $CAN2::BCM::BCM_hazard::sig_hazard = 1;
+    
+    if($CAN2::BCM::ODS_passenger::sig_driver_present == 1) {
+//      @sysvar::Body::driver_seat::pretensioner_indi = 1;
+      @sysvar::Body::driver_state = 6;
+    }
+    if($CAN2::BCM::ODS_passenger::sig_passenger_present == 1) {
+//      @sysvar::Body::passenger_seat::pretensioner_indi = 1;
+      if($CAN2::BCM::ODS_passenger::sig_class == 0){ // adult
+        @sysvar::Body::passenger_state = 3;
+      }
+      else{ // child
+        @sysvar::Body::passenger_state = 6;
+      }
+    }
+    
+  } 
+  
+  // 충돌 상태 벗어나는 로직
+//  else {
+//    $CAN2::BCM::BCM_hazard::sig_hazard = 0;
+    
+//    if($CAN2::BCM::ODS_passenger::sig_driver_present == 1) {
+//      @sysvar::Body::driver_seat::pretensioner_indi = 0;
+//    }
+//    if($CAN2::BCM::ODS_passenger::sig_passenger_present == 1) {
+//      @sysvar::Body::passenger_seat::pretensioner_indi = 0;
+//    }
+//  }
+  
+}
+
+/* sig_driver_present, sig_passenger_present는 ACU_crashstate에서 쓰이고
+ * sig_class는 이 코드에서 사용되지 않음
+ */
+on message CAN2::ODS_passenger {
+  check_seat_belt();
+}
+
+on sysvar sysvar::Body::passenger_seat::seatBelt_indi {
+  check_seat_belt();
+}
+on sysvar sysvar::Body::driver_seat::seatBelt_indi {
+  check_seat_belt();
+}
+void check_seat_belt() {
+  if($CAN2::BCM::ODS_passenger::sig_driver_present == 1 && @sysvar::Body::driver_seat::seatBelt_indi == 0) {
+    $CAN2::BCM::BCM_seatbelt::sig_driver_belt = 1;// belt warning
+    @sysvar::Body::driver_state = 1; // belt off
+  } 
+  else if($CAN2::BCM::ODS_passenger::sig_driver_present == 1 && @sysvar::Body::driver_seat::seatBelt_indi == 1) {
+    $CAN2::BCM::BCM_seatbelt::sig_driver_belt = 0;
+    @sysvar::Body::driver_state = 2; // belt on
+  } 
+  else if($body::Gateway::ODS_passenger::sig_driver_present == 0){
+    $CAN2::BCM::BCM_seatbelt::sig_driver_belt = 0;
+    @sysvar::Body::driver_state = 0; // no driver
+  }
+  
+  if($CAN2::BCM::ODS_passenger::sig_passenger_present == 1 && @sysvar::Body::passenger_seat::seatBelt_indi == 0) {
+    $CAN2::BCM::BCM_seatbelt::sig_passenger_belt = 1;
+    if($CAN2::BCM::ODS_passenger::sig_class == 0) {
+      @sysvar::Body::passenger_state = 1; // passenger no belt
+    }
+    else{
+      @sysvar::Body::passenger_state = 4; // child no belt
+    }
+      
+  }
+  else if($CAN2::BCM::ODS_passenger::sig_passenger_present == 1 && @sysvar::Body::passenger_seat::seatBelt_indi == 1) {
+    $CAN2::BCM::BCM_seatbelt::sig_passenger_belt = 0;
+    if($CAN2::BCM::ODS_passenger::sig_class == 0) {
+      @sysvar::Body::passenger_state = 2; // passenger belt
+    }
+    else{
+      @sysvar::Body::passenger_state = 5; // child belt
+    }
+  }
+  else if($CAN2::BCM::ODS_passenger::sig_passenger_present == 0){
+    $CAN2::BCM::BCM_seatbelt::sig_passenger_belt = 0;
+      @sysvar::Body::passenger_state = 0; // no passenger
+  }
+}
+
+on message CAN2::DMS_driverstate {
+  if(this.sig_droswy < 0) {
+    // error
+  }
+  else if(this.sig_droswy == 0){
+//    check_seat_belt();
+  }
+  else if(this.sig_droswy <= 10){
+    @sysvar::Body::driver_state = 2; // belt on
+  }
+  else if(this.sig_droswy <= 25) {
+    @sysvar::Body::driver_state = 3; // drowsy
+    seat_control(0,0,0);
+    passenger_window_open = 0;
+  } else if(this.sig_droswy <= 50) {
+    @sysvar::Body::driver_state = 4; // seat
+    seat_control(1,0,0);
+  } else if(this.sig_droswy <= 75) {
+    @sysvar::Body::driver_state = 5; // belt
+    seat_control(0,1,0);
+  } else if(this.sig_droswy <= 100) {
+    seat_control(0,0,1);
+    if(wakeup == 1){
+      @sysvar::Body::driver_state = 2; // wakeup
+    }
+    else{
+      @sysvar::Body::driver_state = 3; // drowsy
+    }
+  }
+}
+
+void seat_control(int seat_vibration, int belt_tighten, int window_open) {
+  @sysvar::Body::driver_seat::seat_indi = seat_vibration;
+  @sysvar::Body::driver_seat::beltMotor_indi = belt_tighten;
+  driver_window_open = window_open;
+  passenger_window_open = window_open;
+}
+
+
+
+
+on sysvar sysvar::Body::headlight_switch::light_switch_indi {
+  if(@sysvar::Body::headlight_switch::light_switch_indi == 0) {
+    $CAN2::BCM::BCM_light::sig_lowbeam = 1;
+    $CAN2::BCM::BCM_light::sig_taillight = 0;
+  } else if(@sysvar::Body::headlight_switch::light_switch_indi == 1) {
+    $CAN2::BCM::BCM_light::sig_lowbeam = 0;
+    $CAN2::BCM::BCM_light::sig_taillight = 1;
+  } else if(@sysvar::Body::headlight_switch::light_switch_indi == 2) {
+    if(@sysvar::dayNnight == 1) {
+      $CAN2::BCM::BCM_light::sig_lowbeam = 1;
+    } else {
+      $CAN2::BCM::BCM_light::sig_lowbeam = 0;
+    }
+    $CAN2::BCM::BCM_light::sig_taillight = 0;
+  } else if(@sysvar::Body::headlight_switch::light_switch_indi == 3) {
+    $CAN2::BCM::BCM_light::sig_lowbeam = 0;
+    $CAN2::BCM::BCM_light::sig_taillight = 0;
+  }
+}
+
+
+on sysvar sysvar::Body::headlight_switch::high_beam_indi {
+  if(@sysvar::Body::headlight_switch::high_beam_indi == 1) {
+    $CAN2::BCM::BCM_light::sig_highbeam = 1;
+  } else {
+    $CAN2::BCM::BCM_light::sig_highbeam = 0;
+  }
+}
+
+
+on sysvar sysvar::dayNnight {
+  if(@sysvar::dayNnight == 1) {
+    $CAN2::BCM::BCM_light::sig_lowbeam = 1;
+  } else {
+    $CAN2::BCM::BCM_light::sig_lowbeam = 0;
+  }
+}
+
+
+on sysvar sysvar::Body::headlight_switch::hazzard_switch {
+  if(@sysvar::Body::headlight_switch::hazzard_switch == 0) {
+    $CAN2::BCM::BCM_hazard::sig_hazard = 0;
+  } else {
+    $CAN2::BCM::BCM_hazard::sig_hazard = 1;
+  }
+}

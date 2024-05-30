@@ -1,0 +1,213 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables //전역변수
+{
+  int driver_exist=0; //ODS로부터 받는 운전자 존재 여부 저장 (0 세팅할 것)
+  int passenger_exist=0; //ODS로부터 받는 동승자 존재 여부 저장 (0 세팅할 것)
+  int passenger_class=0; //동승객 성인(0) , 아이(1) ---아이이면 에어백 전개 x , 추가 (0 세팅할 것)
+  //Test 시 위 전역변수 값을 바꾸면 ODS 메시지 안받아도 테스트 가능
+  
+}
+
+on start
+{
+  @sysvar::Chassis::Front_crashsensor=0;
+  @sysvar::Chassis::Left_crashsensor=0;
+  @sysvar::Chassis::Right_crashsensor=0;
+  @sysvar::Chassis::Deploy_airbag_d =0;
+  @sysvar::Chassis::Deploy_airbag_p =0;
+  
+}
+
+on message ODS_passenger{ //일단 메시지 signal 따로 값 저장
+
+  // 가능 케이스 : 0 0   0 1     1 0    1 1 
+  driver_exist=this.sig_driver_present.phys;
+  passenger_exist=this.sig_passenger_present.phys;
+  passenger_class=this.sig_class.phys; //class 추가
+}
+
+on sysvar Chassis::Front_crashsensor{
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+on sysvar Chassis::Left_crashsensor{
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+on sysvar Chassis::Right_crashsensor{
+  deploy_airbag(driver_exist,passenger_exist);
+}
+
+
+ void deploy_airbag(int driver,int passenger){ //운전자, 승객 존재 확인 후 에어백 터트린다
+     //sysvar 변수인 Deploy_airbag_d, Deploy_airbag_p 값 0~3
+     // 0, 1, 2, 3에 따라 에어백 이미지 달라진다  
+   
+  if(driver==1&&passenger==0){ //운전자만 탄 경우 (FL)
+      
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      @sysvar::Chassis::Deploy_airbag_p =0;
+      
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_d =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+//        @sysvar::Chassis::Deploy_airbag_d =1;
+        @sysvar::Chassis::Deploy_airbag_d = 3;
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_d =2;    
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_d =3;
+      }
+    }
+    
+    
+    
+    
+  }
+  else if(driver==1&&passenger==1){ //운전자, 탑승자 모두 탄 경우 (FL, FR)
+  
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      // 운전자
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==0){
+        @sysvar::Chassis::Deploy_airbag_d =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Left_crashsensor==0) {
+//        @sysvar::Chassis::Deploy_airbag_d =1;
+        @sysvar::Chassis::Deploy_airbag_d = 3; // front & left 
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Left_crashsensor==1){
+        @sysvar::Chassis::Deploy_airbag_d =2;
+      } 
+      else{ //둘다 터져
+        @sysvar::Chassis::Deploy_airbag_d =3;
+      }
+      
+      // 성인, 아이 여부 확인 (추가)
+      // 동승자
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+         @sysvar::Chassis::Deploy_airbag_p =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+//           @sysvar::Chassis::Deploy_airbag_p =1;
+           @sysvar::Chassis::Deploy_airbag_p = 3;
+        }
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+           @sysvar::Chassis::Deploy_airbag_p =2;
+        }
+        
+      } 
+      else{ //둘다 터져
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+           @sysvar::Chassis::Deploy_airbag_p =3;
+        }
+      }
+      
+    }
+    
+    
+    
+  }
+  else if(driver==0&&passenger==1){ //운전자 없고 탑승자만 (FR)
+    
+    
+    sendCrashMessage();//충돌시 충돌상태 메시지 보냄
+    
+    //에어백 상태(고장/정상)에 따른 로직 추가
+    if($sig_airbagstate){ //고장 스위치 ON일 경우(airbagstate=1), 충돌해도 에어백 터지지 않음
+      airbag_failure();
+    }
+    else{ //고장 없음
+      
+      //탑승자 아기(1)인지 성인(0)이지 여부 파악(추가)
+      @sysvar::Chassis::Deploy_airbag_d =0;
+      
+      if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==0){
+         @sysvar::Chassis::Deploy_airbag_p =0;
+      } 
+      else if(@sysvar::Chassis::Front_crashsensor==1 && @sysvar::Chassis::Right_crashsensor==0) {
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+//           @sysvar::Chassis::Deploy_airbag_p =1;
+           @sysvar::Chassis::Deploy_airbag_p = 3;
+        }
+      }
+      else if(@sysvar::Chassis::Front_crashsensor==0 && @sysvar::Chassis::Right_crashsensor==1){
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+           @sysvar::Chassis::Deploy_airbag_p =2;
+        }
+        
+      } 
+      else{ //둘다 터져
+        if(passenger_class==1)
+        {
+           @sysvar::Chassis::Deploy_airbag_p =0; //아기면 안터져
+        }
+        else{
+           @sysvar::Chassis::Deploy_airbag_p =3;
+        }
+      }
+    }
+  }
+  else{ //아무도 탑승 안함
+      @sysvar::Chassis::Deploy_airbag_d =0;
+      @sysvar::Chassis::Deploy_airbag_p =0;
+  }
+   
+ }
+ 
+ void sendCrashMessage(){
+   //좌,우, 직진 하나라도 센서값 1이면 메시지 전송(IL 알아서)
+   if(@sysvar::Chassis::Front_crashsensor==1||@sysvar::Chassis::Left_crashsensor==1||@sysvar::Chassis::Right_crashsensor==1){
+     $chassis::ACU::ACU_crashstate::sig_crashstate=1;
+   }else{
+     $chassis::ACU::ACU_crashstate::sig_crashstate=0;
+   }
+ }
+ void airbag_failure(){ //에어백 고장으로 터지지 않음
+   @sysvar::Chassis::Deploy_airbag_p =0;
+   @sysvar::Chassis::Deploy_airbag_d =0;
+ }

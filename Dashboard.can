@@ -1,0 +1,127 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  char master_broken = 0;
+  msTimer animation;
+  int min_119 = 1;
+  int max_119 = 7;
+  int cur_119 = 1;
+  int call_119 = 0;
+  int dumy = 0;
+}
+
+on start{
+  setTimerCyclic(animation, 1000);
+  master_broken = 0;
+  call_119 = 0;
+  cur_119 = 1;
+  @sysvar::Body::airbag_off = 0; // 0: not show / 1: show
+  @sysvar::Body::display = 0; 
+  @sysvar::Body::popup_state = 0;
+  @sysvar::Body::display_119 = 0;
+}
+
+on timer animation{
+  dumy++;
+  write("time: %d - %d, %d ",dumy,  call_119, @sysvar::Body::display_119);
+  if(call_119 == 1){
+    if(@sysvar::Body::display_119 < max_119){
+      @sysvar::Body::display_119++;
+    }
+  }
+  else{
+    ;
+  }
+}
+  
+
+on message body::ECM_broken_m{
+ if($ECM_broken_m::sig_broken == 1){
+   master_broken = 1;
+ }
+ else{
+   master_broken = 0;
+ }
+}
+
+on message body::ODS_passenger
+{
+  if($body::Gateway::ODS_passenger::sig_passenger_present == 0){ // If passenger is absent 
+    @sysvar::Body::airbag_off = 1; // show
+  }
+  else{
+    @sysvar::Body::airbag_off = 0; // not show
+  }
+}
+
+on message ECM_inspection_m{
+  if(master_broken == 0){
+    if($ECM_inspection_m::sig_engine_oil == 1 || $ECM_inspection_m::sig_air_filter == 1 || $ECM_inspection_m::sig_plug == 1 || $ECM_inspection_m::sig_coolant == 1){
+      @sysvar::Body::display = 1; // inspection
+    }
+    else if($ECM_inspection_m::sig_engine_oil == 0 && $ECM_inspection_m::sig_air_filter == 0 && $ECM_inspection_m::sig_plug == 0 && $ECM_inspection_m::sig_coolant == 0){
+      @sysvar::Body::display = 0; // inspection
+    }
+  }
+  else{
+    ;
+  }
+}
+
+on message ECM_inspection_s{
+  
+  if(master_broken == 0){
+    ;
+  }
+  else{
+    if($ECM_inspection_s::sig_engine_oil == 1 || $ECM_inspection_s::sig_air_filter == 1 || $ECM_inspection_s::sig_plug == 1 || $ECM_inspection_s::sig_coolant == 1){
+      @sysvar::Body::display = 1; // inspection
+    }
+    else if($ECM_inspection_s::sig_engine_oil == 0 && $ECM_inspection_s::sig_air_filter == 0 && $ECM_inspection_s::sig_plug == 0 && $ECM_inspection_s::sig_coolant == 0){
+      @sysvar::Body::display = 0; //normal 
+    }
+  }
+  
+}
+on message DMS_driverstate{
+  if($sig_droswy == 0){
+    @sysvar::Body::popup_state = 0; // nothing
+  }
+  else if($sig_droswy > 0 && $sig_droswy <=25){
+    @sysvar::Body::popup_state = 1; // white
+  }
+  else if($sig_droswy <= 50){
+    @sysvar::Body::popup_state = 2; // green
+  }
+  else if($sig_droswy <= 75){
+    @sysvar::Body::popup_state = 3; // yellow
+  }
+  else if($sig_droswy <= 100){
+    @sysvar::Body::popup_state = 4; //red
+  }
+  if($sig_injured >= 0 && $sig_injured <= 33){
+//    @sysvar::Body::display = 0; // normal
+    @sysvar::Body::display_119 = 0;
+  }
+  else if($sig_injured <= 66){
+    @sysvar::Body::display = 2; // auto-call(connected car)
+    @sysvar::Body::display_119 = 0;
+  }
+  else if($sig_injured <= 100){
+    call_119 = 1; // show call 119 display
+  }
+}
+
+on signal sig_crashstate{
+  if($sig_crashstate == 1){
+      @sysvar::Body::display = 2; // auto call
+  }
+  else{
+    ;
+  }
+}

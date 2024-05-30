@@ -1,0 +1,125 @@
+﻿/*@!Encoding:65001*/
+includes
+{
+  
+}
+
+variables
+{
+  int i =0;
+  msTimer myTimer;
+  int pre_diag0=0;
+  int pre_diag1 =0;
+  int pre_gearstep=1;
+  int temp_gearstep=1;
+  float gearratio[5] ={3.665,2.396,1.610,1.190,1}; // 기어단에 따른 기어비 
+  
+}
+
+on start
+{
+ @sysvar::Powertrain::user_rpm =0;
+}
+
+on key 'c'
+{
+ @sysvar::Powertrain::user_rpm++;
+}
+
+on key'd'
+{
+@sysvar::Powertrain::user_rpm--;  
+}
+
+on sysvar sysvar::Powertrain::user_rpm 
+{
+  $ECM_S::sig_rpm = @this;
+}
+
+on signal ECM_S::sig_rpm
+{
+  i = $sig_gearstep;
+  @sysvar::Powertrain::MAF_sensor = this/8000 *100; // accelerator에 비례하여 변화하는 MAF_sensor값 
+  @sysvar::Powertrain::user_rpm =this;
+  $ECM_S::sig_velo = (this * 60 * 738 * 3.14)/(gearratio[i-1] * 3.909*1000000); //rpm과 gearstep에 따른 velo계산
+}
+
+
+//on signal ECM_M::sig_broken
+//{
+//  if($ECM_M::sig_broken ==1)
+//  {
+//    setTimerCyclic(myTimer, 5);
+//  }
+//}
+
+on message ECM_broken_m{
+  if($ECM_broken_m::sig_broken ==1){
+    i = $sig_gearstep;
+    setTimerCyclic(myTimer, 5);
+  }
+}
+
+on signal sig_brake
+{
+  $ECM_S::sig_rpm = $ECM_S::sig_rpm - ($ECM_S::sig_rpm*this * 0.01); // brake의 비율에 반비례하며 rpm 감소 
+}
+
+on signal sig_gearstep // 기어단수 변화에 따른 RPM 갱신  
+{
+   temp_gearstep = $sig_gearstep;
+   $ECM_S::sig_rpm = $ECM_S::sig_rpm * gearratio[temp_gearstep-1]/gearratio[pre_gearstep-1];
+   pre_gearstep = temp_gearstep;
+   //@sysvar::Powertrain::user_rpm =$ECM_M::sig_rpm;
+}
+
+on timer myTimer
+{
+  message ECM_ct_s msg_ct;
+  message ECM_speed_s msg_speed;
+  
+  msg_ct.sig_temp = @sysvar::Powertrain::sys_temp_s;
+//  msg_speed.sig_rpm = $ECM_S::sig_rpm;
+  msg_speed.sig_rpm = @sysvar::Powertrain::user_rpm;
+//  msg_speed.sig_velo = $ECM_S::sig_velo;
+  msg_speed.sig_velo = (@sysvar::Powertrain::user_rpm  * 60 * 738 * 3.14)/(gearratio[i-1] * 3.909*1000000);
+  
+  output(msg_ct);
+  output(msg_speed);
+}
+
+on sysvar_update Powertrain::diag_state
+{
+  message ECM_inspection_s msg;
+  if($ECM_M::sig_broken==1 &&$sig_driven_distance >=20000)
+  {
+    if(@sysvar::Powertrain::diag_state==1)
+    {
+        msg.sig_engine_oil = 0;
+        msg.sig_plug = 0;
+        msg.sig_air_filter = 0;
+        msg.sig_coolant=0;
+        if(pre_diag1 ==0) output(msg);
+        pre_diag1 =1;
+    }
+  }
+}
+
+on signal sig_driven_distance
+{
+  message ECM_inspection_s msg;
+  if($ECM_M::sig_broken==1 && $sig_driven_distance >=20000)
+  {
+    if(@sysvar::Powertrain::diag_state==0)
+    {
+        msg.sig_engine_oil = 1;
+        msg.sig_plug = 1;
+        msg.sig_air_filter = 1;
+        msg.sig_coolant=1;
+        if(pre_diag0 ==0) output(msg);
+        pre_diag0 =1;
+    }
+  }
+}
+
+
